@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(ElvUI); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(ElvUI); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local DT = E:GetModule('DataTexts')
 
 local datatexts = {}
@@ -15,6 +15,22 @@ local HideRightChat = HideRightChat
 local HIDE = HIDE
 local AFK = AFK
 local DND = DND
+local GetSpecializationInfo = GetSpecializationInfo
+local GetNumEquipmentSets = C_EquipmentSet.GetNumEquipmentSets
+local GetEquipmentSetInfo = C_EquipmentSet.GetEquipmentSetInfo
+
+local function GetEquipmentList()
+	local num = GetNumEquipmentSets()
+	local list = {['NONE'] = NONE}
+	if num == 0 then return list; end
+
+	for i = 1, num do
+		local name = C_EquipmentSet.GetEquipmentSetInfo(i)
+		if name then list[name] = name; end
+	end
+
+	return list;
+end
 
 function DT:PanelLayoutOptions()
 	for name, data in pairs(DT.RegisteredDataTexts) do
@@ -38,13 +54,17 @@ function DT:PanelLayoutOptions()
 				name = L[pointLoc] or pointLoc,
 				order = order,
 			}
-			for option in pairs(tab) do
+			for option, value in pairs(tab) do
 				table[pointLoc].args[option] = {
 					type = 'select',
 					name = L[option] or option:upper(),
 					values = datatexts,
 					get = function(info) return E.db.datatexts.panels[pointLoc][ info[#info] ] end,
-					set = function(info, value) E.db.datatexts.panels[pointLoc][ info[#info] ] = value; DT:LoadDataTexts() end,
+					set = function(info, value)
+						E.db.datatexts.panels[pointLoc][ info[#info] ] = value;
+						if pointLoc == 'TopDataTextsBar3' then E:StaticPopup_Show("PRIVATE_RL") end;
+						DT:LoadDataTexts()
+					end,
 				}
 			end
 		elseif type(tab) == 'string' then
@@ -204,7 +224,7 @@ end
 
 E.Options.args.datatexts = {
 	type = "group",
-	name = L["DataTexts"],
+	name = '12.'..L["DataTexts"],
 	childGroups = "tab",
 	get = function(info) return E.db.datatexts[ info[#info] ] end,
 	set = function(info, value) E.db.datatexts[ info[#info] ] = value; DT:LoadDataTexts() end,
@@ -260,16 +280,59 @@ E.Options.args.datatexts = {
 							end,
 						},
 						noCombatClick = {
-							order = 6,
+							order = 5,
 							type = "toggle",
 							name = L["Block Combat Click"],
 							desc = L["Blocks all click events while in combat."],
 						},
 						noCombatHover = {
-							order = 7,
+							order = 6,
 							type = "toggle",
 							name = L["Block Combat Hover"],
 							desc = L["Blocks datatext tooltip from showing in combat."],
+						},
+						width = {
+							order = 16,
+							name = L['TopInfobar width'],
+							type = 'range',
+							min = 20, max = 200, step = 1,
+							set = function(info, value)
+								E.db.infobar.width = value
+								E:GetModule('Layout'):ChangeSize(TopDataTextsBar1);
+								E:GetModule('Layout'):ChangeSize(TopDataTextsBar2);
+								E:GetModule('Layout'):ChangeSize(TopDataTextsBar3, 3);
+								E:GetModule('Layout'):ChangeSize(TopDataTextsBar4, 2);
+								E:GetModule('Layout'):ChangePositon()
+								DT:UpdateAllDimensions()
+							end,
+							get = function(info) return E.db.infobar.width; end,
+						},
+						height = {
+							order = 17,
+							type = 'range',
+							min = 10, max = 100, step = 1,
+							name = L['TopInfobar height'],
+							set = function(info, value)
+								E.db.infobar.height = value
+								E:GetModule('Layout'):ChangeSize(TopDataTextsBar1);
+								E:GetModule('Layout'):ChangeSize(TopDataTextsBar2);
+								E:GetModule('Layout'):ChangeSize(TopDataTextsBar3, 3);
+								E:GetModule('Layout'):ChangeSize(TopDataTextsBar4, 2);
+								E:GetModule('Layout'):ChangePositon()
+								DT:UpdateAllDimensions()
+							end,
+							get = function(info) return E.db.infobar.height; end,
+						},
+						alignABInfo = {
+							order = 18,
+							type = 'execute',
+							name = L['Align Actionbar Infobar'],
+							desc = L['Align Actionbar Infobar desc'],
+							func = function() 
+								if E.db.actionbar.euiabstyle ~= 'None' then
+									E:SetupActionbar(E.db.actionbar.euiabstyle)
+								end
+							end,
 						},
 					},
 				},
@@ -509,6 +572,48 @@ E.Options.args.datatexts = {
 					desc = L["If not set to true then the server time will be displayed instead."],
 					get = function(info) return E.db.datatexts.localtime end,
 					set = function(info, value) E.db.datatexts.localtime = value; DT:LoadDataTexts() end,
+				},
+			},
+		},
+		spec = {
+			order = 130,
+			type = 'group',
+			guiInline = true,
+			name = L['Spec Binding Equipment'],
+			args = {
+				spec1 = {
+					type = 'select',
+					order = 1,
+					name = select(2, GetSpecializationInfo(1)),
+					values = GetEquipmentList,
+					get = function(info, k) return E.db.datatexts.spec1; end,
+					set = function(info, k, v) E.db.datatexts.spec1 = k; end,
+				},
+				spec2 = {
+					type = 'select',
+					order = 2,
+					name = select(2, GetSpecializationInfo(2)),
+					values = GetEquipmentList,
+					get = function(info, k) return E.db.datatexts.spec2; end,
+					set = function(info, k, v) E.db.datatexts.spec2 = k; end,
+				},
+				spec3 = {
+					type = 'select',
+					order = 1,
+					name = select(2, GetSpecializationInfo(3)) or " ",
+					hidden = function() return not GetSpecializationInfo(3) end,
+					values = GetEquipmentList,
+					get = function(info, k) return E.db.datatexts.spec3; end,
+					set = function(info, k, v) E.db.datatexts.spec3 = k; end,
+				},
+				spec4 = {
+					type = 'select',
+					order = 2,
+					name = select(2, GetSpecializationInfo(4)) or " ",
+					hidden = function() return not GetSpecializationInfo(4) end,
+					values = GetEquipmentList,
+					get = function(info, k) return E.db.datatexts.spec4; end,
+					set = function(info, k, v) E.db.datatexts.spec4 = k; end,
 				},
 			},
 		},

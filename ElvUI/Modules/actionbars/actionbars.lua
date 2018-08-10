@@ -96,11 +96,29 @@ AB["barDefaults"] = {
 		['position'] = "RIGHT,ElvUI_Bar1,LEFT,-4,0",
 	},
 	["bar6"] = {
-		['page'] = 2,
+		['page'] = 8,
 		['bindButtons'] = "ELVUIBAR6BUTTON",
 		['conditions'] = "",
-		['position'] = "BOTTOM,ElvUI_Bar2,TOP,0,2",
-	},
+		['position'] = "BOTTOM,ElvUI_Bar1,TOP,0,100",
+	},	
+	["bar7"] = {
+		['page'] = 9,
+		['bindButtons'] = "ELVUIBAR7BUTTON",
+		['conditions'] = "",
+		['position'] = "BOTTOM,ElvUI_Bar1,TOP,0,150",
+	},	
+	["bar8"] = {
+		['page'] = 10,
+		['bindButtons'] = "ELVUIBAR8BUTTON",
+		['conditions'] = "",
+		['position'] = "BOTTOM,ElvUI_Bar1,TOP,0,200",
+	},	
+	["bar9"] = {
+		['page'] = 7,
+		['bindButtons'] = "ELVUIBAR9BUTTON",
+		['conditions'] = "",
+		['position'] = "BOTTOM,ElvUI_Bar1,TOP,0,250",
+	},	
 }
 
 AB.customExitButton = {
@@ -400,7 +418,7 @@ function AB:CreateBar(id)
 	]]);
 
 	self.handledBars['bar'..id] = bar;
-	E:CreateMover(bar, 'ElvAB_'..id, L["Bar "]..id, nil, nil, nil,'ALL,ACTIONBARS')
+	E:CreateMover(bar, 'ElvAB_'..id, L["Bar "]..id, nil, nil, nil,'ALL,ACTIONBARS', function() return E.db.actionbar['bar'..id].enabled; end)
 	self:PositionAndSizeBar('bar'..id);
 	return bar
 end
@@ -528,11 +546,11 @@ function AB:RemoveBindings()
 end
 
 function AB:UpdateBar1Paging()
-	if self.db.bar6.enabled then
-		AB.barDefaults.bar1.conditions = format("[possessbar] %d; [overridebar] %d; [shapeshift] 13; [form,noform] 0; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6;", GetVehicleBarIndex(), GetOverrideBarIndex())
-	else
-		AB.barDefaults.bar1.conditions = format("[possessbar] %d; [overridebar] %d; [shapeshift] 13; [form,noform] 0; [bar:2] 2; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6;", GetVehicleBarIndex(), GetOverrideBarIndex())
-	end
+--	if self.db.bar6.enabled then
+--		AB.barDefaults.bar1.conditions = format("[possessbar] %d; [overridebar] %d; [shapeshift] 13; [form,noform] 0; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6;", GetVehicleBarIndex(), GetOverrideBarIndex())
+--	else
+--		AB.barDefaults.bar1.conditions = format("[possessbar] %d; [overridebar] %d; [shapeshift] 13; [form,noform] 0; [bar:2] 2; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6;", GetVehicleBarIndex(), GetOverrideBarIndex())
+--	end
 
 	if (E.private.actionbar.enable ~= true or InCombatLockdown()) or not self.isInitialized then return; end
 	local bar2Option = InterfaceOptionsActionBarsPanelBottomRight
@@ -603,7 +621,7 @@ function AB:UpdateButtonSettings()
 		end
 	end
 
-	for i=1, 6 do
+	for i=1, 9 do
 		self:PositionAndSizeBar('bar'..i)
 	end
 
@@ -636,6 +654,7 @@ function AB:StyleButton(button, noBackdrop, useMasque)
 	local flash	 = _G[name.."Flash"];
 	local hotkey = _G[name.."HotKey"];
 	local border  = _G[name.."Border"];
+	local macroName = _G[name.."Name"];
 	local normal  = _G[name.."NormalTexture"];
 	local normal2 = button:GetNormalTexture()
 	local shine = _G[name.."Shine"];
@@ -678,9 +697,15 @@ function AB:StyleButton(button, noBackdrop, useMasque)
 		shine:SetAllPoints()
 	end
 
-	if self.db.hotkeytext then
+	if self.db.hotkeytext or self.db.useRangeColorText then
 		hotkey:FontTemplate(LSM:Fetch("font", self.db.font), self.db.fontSize, self.db.fontOutline)
-		hotkey:SetTextColor(color.r, color.g, color.b)
+		if button.config and (button.config.outOfRangeColoring ~= "hotkey") then
+			button.HotKey:SetTextColor(color.r, color.g, color.b)
+		end
+	end
+
+	if self.db.macrotext and macroName then
+		macroName:FontTemplate(LSM:Fetch("font", self.db.font), self.db.fontSize, self.db.fontOutline)
 	end
 
 	--Extra Action Button
@@ -940,6 +965,7 @@ function AB:UpdateButtonConfig(bar, buttonName)
 	bar.buttonConfig.hideElements.hotkey = not self.db.hotkeytext
 	bar.buttonConfig.showGrid = self.db["bar"..bar.id].showGrid
 	bar.buttonConfig.clickOnDown = self.db.keyDown
+	bar.buttonConfig.outOfRangeColoring = (self.db.useRangeColorText and 'hotkey') or 'button'
 	SetModifiedClick("PICKUPACTION", self.db.movementModifier)
 	bar.buttonConfig.colors.range = E:GetColorTable(self.db.noRangeColor)
 	bar.buttonConfig.colors.mana = E:GetColorTable(self.db.noPowerColor)
@@ -1152,12 +1178,51 @@ function AB:VehicleFix()
 	end
 end
 
+function AB:EuiStyle(value)
+	if E.db.movers == nil then E.db.movers = {} end
+	if not value then value = self.db.euiabstyle end
+	local offsetX1, offsetX3, offsetX5 = 0, 0, 0
+	
+	if AB1Infobar:IsShown() then offsetX1 = 25 end
+	if AB5Infobar:IsShown() then offsetX5 = 25 end
+	if AB3Infobar:IsShown() then offsetX3 = 25 end
+	
+	for i = 1, 5 do
+		E:ResetMovers('ElvAB_'..i)
+	end
+	E:ResetMovers('PetAB')
+
+	E.db.movers.ElvAB_1 = string.format('%s,%s,%s,%d,%d','BOTTOM', 'ElvUIParent', 'BOTTOM', 0, 4 + offsetX1)
+	if value == 'Low' then	
+		E.db.movers.ElvAB_2 = string.format('%s,%s,%s,%d,%d','BOTTOM', 'ElvUIParent', 'BOTTOM', 0, 4 + self.db['bar1'].buttonsize + self.db['bar1'].buttonspacing + offsetX1)
+		E.db.movers.ElvAB_3 = string.format('%s,%s,%s,%d,%d', 'BOTTOM', 'ElvUIParent', 'BOTTOM', 0, 4 + self.db['bar1'].buttonsize + self.db['bar1'].buttonspacing + self.db['bar2'].buttonsize + self.db['bar2'].buttonspacing + offsetX1)
+		E.db.movers.ElvAB_4 = string.format('%s,%s,%s,%d,%d', 'RIGHT', 'ElvUIParent', 'RIGHT', -4, 0)
+		E.db.movers.ElvAB_5 = string.format('%s,%s,%s,%d,%d', 'RIGHT', 'ElvUIParent', 'RIGHT', -(4 + self.db['bar4'].buttonsize + self.db['bar4'].buttonspacing), 0)
+		E.db.movers.PetAB = string.format('%s,%s,%s,%d,%d', 'RIGHT', 'ElvUIParent', 'RIGHT', -(4 + self.db['bar4'].buttonsize + self.db['bar4'].buttonspacing) - self.db['bar5'].buttonsize - self.db['bar5'].buttonspacing * 2 - 4, 0)
+	elseif value == 'Middle' then
+		E.db.movers.ElvAB_2 = string.format('%s,%s,%s,%d,%d', 'BOTTOM', 'ElvUIParent', 'BOTTOM', 0, 4 + self.db['bar1'].buttonsize + self.db['bar1'].buttonspacing + offsetX1)
+		E.db.movers.ElvAB_4 = string.format('%s,%s,%s,%d,%d', 'BOTTOM', 'ElvUIParent', 'BOTTOM', 0, 4 + self.db['bar1'].buttonsize + self.db['bar1'].buttonspacing + self.db['bar2'].buttonsize + self.db['bar2'].buttonspacing + offsetX1)
+		E.db.movers.ElvAB_3 = string.format('%s,%s,%s,%d,%d', 'BOTTOMLEFT', 'ElvUIParent', 'BOTTOM', 4 + self.db['bar4'].buttonsize * 6 + self.db['bar4'].buttonspacing * 7, 4 + offsetX3)
+		E.db.movers.ElvAB_5 = string.format('%s,%s,%s,%d,%d', 'BOTTOMRIGHT', 'ElvUIParent', 'BOTTOM', -(4 + self.db['bar4'].buttonsize * 6 + self.db['bar4'].buttonspacing * 7), 4 + offsetX5)
+		E.db.movers.PetAB = string.format('%s,%s,%s,%d,%d', 'RIGHT', 'ElvUIParent', 'RIGHT', -4, 0)
+	elseif value == 'High' then
+		E.db.movers.ElvAB_2 = string.format('%s,%s,%s,%d,%d', 'BOTTOM', 'ElvUIParent', 'BOTTOM', 0, 4 + self.db['bar1'].buttonsize + self.db['bar1'].buttonspacing + offsetX1)
+		E.db.movers.ElvAB_4 = string.format('%s,%s,%s,%d,%d', 'RIGHT', 'ElvUIParent', 'RIGHT', -4, 0)
+		E.db.movers.ElvAB_3 = string.format('%s,%s,%s,%d,%d', 'BOTTOMLEFT', 'ElvUIParent', 'BOTTOM', 4 + self.db['bar4'].buttonsize * 6 + self.db['bar4'].buttonspacing * 7, 4 + offsetX3)
+		E.db.movers.ElvAB_5 = string.format('%s,%s,%s,%d,%d', 'BOTTOMRIGHT', 'ElvUIParent', 'BOTTOM', -(4 + self.db['bar4'].buttonsize * 6 + self.db['bar4'].buttonspacing * 7), 4 + offsetX5)
+		E.db.movers.PetAB = string.format('%s,%s,%s,%d,%d', 'RIGHT', 'ElvUIParent', 'RIGHT', -(4 + self.db['bar4'].buttonsize + self.db['bar4'].buttonspacing * 2 + 4), 0)
+	end
+end
+
 local color
 --Update text color when button is updated
 function AB:LAB_ButtonUpdate(button)
 	color = AB.db.fontColor
 	button.Count:SetTextColor(color.r, color.g, color.b)
 	button.HotKey:SetTextColor(color.r, color.g, color.b)
+	if button.config and (button.config.outOfRangeColoring ~= "hotkey") then
+		button.HotKey:SetTextColor(color.r, color.g, color.b)
+	end
 end
 LAB.RegisterCallback(AB, "OnButtonUpdate", AB.LAB_ButtonUpdate)
 
@@ -1230,7 +1295,7 @@ function AB:Initialize()
 	self:SetupMicroBar()
 	self:UpdateBar1Paging()
 
-	for i=1, 6 do
+	for i=1, 9 do
 		self:CreateBar(i)
 	end
 	self:CreateBarPet()

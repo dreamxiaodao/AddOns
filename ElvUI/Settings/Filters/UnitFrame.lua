@@ -273,7 +273,7 @@ G.unitframe.aurafilters['TurtleBuffs'] = {
 		[199027] = Defaults(), -- Veil of Midnight
 	--Shaman
 		[204293] = Defaults(), -- Spirit Link
-		[204288] = Defaults(), -- Earth Shield
+		[974] = Defaults(), -- Earth Shield
 		[210918] = Defaults(), -- Ethereal Form
 		[207654] = Defaults(), -- Servant of the Queen
 		[108271] = Defaults(), -- Astral Shift
@@ -507,7 +507,7 @@ G.unitframe.aurafilters['PlayerBuffs'] = {
 		[202665] = Defaults(), -- Curse of the Dreadblades (Self Debuff)
 	--Shaman
 		[204293] = Defaults(), -- Spirit Link
-		[204288] = Defaults(), -- Earth Shield
+		[974] = Defaults(), -- Earth Shield
 		[210918] = Defaults(), -- Ethereal Form
 		[207654] = Defaults(), -- Servant of the Queen
 		[108271] = Defaults(), -- Astral Shift
@@ -648,6 +648,11 @@ G.unitframe.aurafilters['Whitelist'] = {
 G.unitframe.aurafilters['RaidDebuffs'] = {
 	['type'] = 'Whitelist',
 	['spells'] = {
+	--user erport
+		[247367] = Defaults(), --震击之枪
+		[257978] = Defaults(), --熔铸之击
+		[245990] = Defaults(), --泰沙拉克之触
+
 	-- Legion
 	-- Antorus, the Burning Throne
 		-- Garothi Worldbreaker
@@ -1278,7 +1283,7 @@ G.unitframe.buffwatch = {
 	},
 	SHAMAN = {
 		[61295]  = ClassBuff(61295, "TOPRIGHT", {0.7, 0.3, 0.7}),   	 -- Riptide
-		[204288] = ClassBuff(204288, "BOTTOMRIGHT", {0.2, 0.2, 1}), 	 -- Earth Shield (Honor Talent)
+		[974] = ClassBuff(974, "BOTTOMRIGHT", {0.2, 0.2, 1}), 	 -- Earth Shield (Honor Talent)
 	},
 	MONK = {
 		[119611] = ClassBuff(119611, "TOPLEFT", {0.3, 0.8, 0.6}),        -- Renewing Mist
@@ -1305,6 +1310,51 @@ G.unitframe.buffwatch = {
 	WARLOCK = {},
 	MAGE = {},
 	DEATHKNIGHT = {},
+	ALL = {
+	--	ClassBuff(740, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, nil, nil, 14, true), --宁静
+		[97463] = ClassBuff(97463, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, -10, 0, 14, true),--集结呐喊*
+		[64844] = ClassBuff(64844, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, -10, nil, 14, true), --神圣赞美诗*
+		[81782] = ClassBuff(81782, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, -10, nil, 14, true), --真言术：障*
+		[15286] = ClassBuff(15286, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, -10, nil, 14, true), --吸血鬼的拥抱
+		[31821] = ClassBuff(31821, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, -10, nil, 14, true), --虔诚光环
+		[88611] = ClassBuff(88611, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, -10, nil, 14, true), --烟雾弹*
+		[145629] = ClassBuff(145629, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, -10, nil, 14, true), --反魔法领域
+	--	[108280] = ClassBuff(108280, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, nil, nil, 14, true), --治疗之潮图腾
+		[98007] = ClassBuff(98007, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, -10, nil, 14, true), --灵魂链接图腾*
+	--	[172106] = ClassBuff(172106, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, -10, nil, 14, true), --灵狐守护*
+	--	[159916] = ClassBuff(159916, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, -10, nil, 14, true), --魔法增效
+	},
+	CHAR = { --个人减伤组
+		[48707] = ClassBuff(48707, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --反魔法护罩
+		[30823] = ClassBuff(30823, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --萨满之怒
+		[108271] = ClassBuff(108271, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --萨满之怒
+		[33206] = ClassBuff(33206, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --痛苦压制
+		[47585] = ClassBuff(47585, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --消散
+		[871] = ClassBuff(871, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --盾墙
+		[48792] = ClassBuff(48792, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --冰封之韧
+		[498] = ClassBuff(498, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --圣佑术
+		[22812] = ClassBuff(22812, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --树皮术
+		[61336] = ClassBuff(61336, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --生存本能
+		[5277] = ClassBuff(5277, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --闪避
+		[74001] = ClassBuff(74001, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --备战就绪
+		[47788] = ClassBuff(47788, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --守护之魂
+		[19263] = ClassBuff(19263, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --威慑
+		[6940] = ClassBuff(6940, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --牺牲之手
+		[31850] = ClassBuff(31850, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --炽热防御者
+		[31224] = ClassBuff(31224, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --暗影斗篷
+		[42650] = ClassBuff(42650, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --亡者大军
+		[86657] = ClassBuff(86657, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --远古守卫
+		[118038] = ClassBuff(118038, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --剑在人在
+		[115176] = ClassBuff(115176, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --禅悟冥想
+		[115308] = ClassBuff(115308, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --飘渺酒
+		[120954] = ClassBuff(120954, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --壮胆酒
+		[115295] = ClassBuff(115295, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --金钟罩
+		[51271] = ClassBuff(51271, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --冰霜之柱
+		[12975] = ClassBuff(12975, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --破釜沉舟
+		[97463] = ClassBuff(97463, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --集结呐喊
+		[102342] = ClassBuff(102342, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --铁木树皮
+		[114039] = ClassBuff(114039, "TOP", {1, 0, 0}, true, nil, "texturedIcon", nil, nil, nil, nil, 10, nil, 14, true), --纯净之手
+	},
 }
 
 -- Profile specific BuffIndicator
@@ -1324,6 +1374,8 @@ G.unitframe.ChannelTicks = {
 	[SpellName(5143)]   = 5,  -- Arcane Missiles
 	[SpellName(12051)]  = 3,  -- Evocation
 	[SpellName(205021)] = 10, -- Ray of Frost
+	--Druid
+	[SpellName(740)]    = 4, -- Tranquility
 }
 
 local priestTier17 = {115560,115561,115562,115563,115564}
@@ -1370,15 +1422,21 @@ G.unitframe.DebuffHighlightColors = {
 }
 
 G.unitframe.specialFilters = {
+	-- Whitelists
 	['Boss'] = true,
 	['Personal'] = true,
 	['nonPersonal'] = true,
-	['blockNonPersonal'] = true,
 	['CastByUnit'] = true,
 	['notCastByUnit'] = true,
-	['blockNoDuration'] = true,
 	['Dispellable'] = true,
+	['notDispellable'] = true,
 	['CastByNPC'] = true,
 	['CastByPlayers'] = true,
+
+	-- Blacklists
+	['blockNonPersonal'] = true,
 	['blockCastByPlayers'] = true,
+	['blockNoDuration'] = true,
+	['blockDispellable'] = true,
+	['blockNotDispellable'] = true,
 };

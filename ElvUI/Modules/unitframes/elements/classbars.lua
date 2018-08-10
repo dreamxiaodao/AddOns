@@ -48,7 +48,7 @@ function UF:Configure_ClassBar(frame, cur)
 
 	local color = self.db.colors.classResources.bgColor
 	bars.backdrop.ignoreUpdates = true
-	bars.backdrop.backdropTexture:SetVertexColor(color.r, color.g, color.b)
+	bars.backdrop.backdropTexture:SetColorTexture(color.r, color.g, color.b) --by eui.cc
 
 	color = E.db.unitframe.colors.borderColor
 	bars.backdrop:SetBackdropBorderColor(color.r, color.g, color.b)
@@ -133,7 +133,7 @@ function UF:Configure_ClassBar(frame, cur)
 
 			if i <= frame.MAX_CLASS_BAR then
 				bars[i].backdrop.ignoreUpdates = true
-				bars[i].backdrop.backdropTexture:SetVertexColor(color.r, color.g, color.b)
+				bars[i].backdrop.backdropTexture:SetColorTexture(color.r, color.g, color.b) --by eui.cc
 
 				color = E.db.unitframe.colors.borderColor
 				bars[i].backdrop:SetBackdropBorderColor(color.r, color.g, color.b)

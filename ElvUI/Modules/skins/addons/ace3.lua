@@ -161,6 +161,11 @@ function S:SkinAce3()
 			end
 			button:SetParent(frame.backdrop)
 			text:SetParent(frame.backdrop)
+			if E.db.general.transparent then
+				frame.backdrop:SetBackdropColor(44/255, 62/255, 220/255, .7)
+			else
+				frame.backdrop:SetBackdropColor(0, 1, 0, 1)
+			end
 			button:HookScript('OnClick', SkinDropdownPullout)
 			button_cover:HookScript('OnClick', SkinDropdownPullout)
 		elseif TYPE == "LSM30_Font" or TYPE == "LSM30_Sound" or TYPE == "LSM30_Border" or TYPE == "LSM30_Background" or TYPE == "LSM30_Statusbar" then
@@ -249,7 +254,19 @@ function S:SkinAce3()
 
 			lowtext:Point("TOPLEFT", frame, "BOTTOMLEFT", 2, -2)
 			hightext:Point("TOPRIGHT", frame, "BOTTOMRIGHT", -2, -2)
+		elseif TYPE == "Keybinding" then
+			local button = widget.button
+			local msgframe = widget.msgframe
 
+			SkinButton(button, nil, true)
+			button:StripTextures()
+			button:CreateBackdrop('Default', true)
+			button.backdrop:SetInside()
+
+			msgframe:StripTextures()
+			msgframe:SetTemplate('Transparent')
+			msgframe.msg:ClearAllPoints()
+			msgframe.msg:SetPoint("CENTER")
 
 		--[[elseif TYPE == "ColorPicker" then
 			local frame = widget.frame
@@ -315,10 +332,11 @@ function S:SkinAce3()
 					local groupstatus = status.groups
 					local lines = self.lines
 					local buttons = self.buttons
+					local offset = status.scrollvalue
 
-					for i, line in pairs(lines) do
-						local button = buttons[i]
-						if groupstatus[line.uniquevalue] and button then
+					for i = offset + 1, #lines do
+						local button = buttons[i - offset]
+						if groupstatus[lines[i].uniquevalue] and button then
 							button.toggleText:SetText('-')
 						elseif button then
 							button.toggleText:SetText('+')

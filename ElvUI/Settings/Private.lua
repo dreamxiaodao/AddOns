@@ -10,11 +10,11 @@ V['general'] = {
 	['dmgfont'] = 'PT Sans Narrow',
 	['namefont'] = 'PT Sans Narrow',
 	['chatBubbles'] = 'backdrop',
-	['chatBubbleFont'] = 'PT Sans Narrow',
+	['chatBubbleFont'] = 'EUI',
 	['chatBubbleFontSize'] = 14,
 	['chatBubbleFontOutline'] = 'NONE',
 	['chatBubbleName'] = false,
-	['pixelPerfect'] = true,
+	['pixelPerfect'] = false,
 	['replaceBlizzFonts'] = true,
 	['minimap'] = {
 		['enable'] = true,
@@ -23,6 +23,7 @@ V['general'] = {
 	},
 	['classColorMentionsSpeech'] = true,
 	['raidUtility'] = true,
+	['voiceOverlay'] = false,
 }
 
 V['bags'] = {
@@ -50,6 +51,9 @@ V['chat'] = {
 
 V['skins'] = {
 	['ace3'] = {
+		['enable'] = true,
+	},
+	['rematch'] = {
 		['enable'] = true,
 	},
 	['blizzard'] = {

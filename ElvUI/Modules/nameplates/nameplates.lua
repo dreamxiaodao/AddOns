@@ -703,6 +703,7 @@ function mod:UpdateElement_All(frame, unit, noTargetFrame, filterIgnore)
 	end
 
 	mod:UpdateElement_RaidIcon(frame)
+	mod:UpdateElement_QuestIcon(frame)
 	mod:UpdateElement_HealerIcon(frame)
 	mod:UpdateElement_Name(frame)
 	mod:UpdateElement_NPCTitle(frame)
@@ -761,6 +762,7 @@ function mod:NAME_PLATE_CREATED(_, frame)
 	frame.unitFrame.HealerIcon = self:ConstructElement_HealerIcon(frame.unitFrame)
 	frame.unitFrame.RaidIcon = self:ConstructElement_RaidIcon(frame.unitFrame)
 	frame.unitFrame.Elite = self:ConstructElement_Elite(frame.unitFrame)
+	frame.unitFrame.QuestIcon = self:ConstructElement_QuestIcon(frame.unitFrame)
 	frame.unitFrame.DetectionModel = self:ConstructElement_Detection(frame.unitFrame)
 	frame.unitFrame.Highlight = self:ConstructElement_Highlight(frame.unitFrame)
 
@@ -815,6 +817,7 @@ function mod:OnEvent(event, unit, ...)
 		mod:UpdateElement_Filters(self, event)
 		mod:ForEachPlate("ResetNameplateFrameLevel") --keep this after `UpdateElement_Filters`
 		mod:UpdateVisibility()
+		mod:UpdateElement_QuestIcon(self) --by eui.cc
 	elseif(event == "UNIT_TARGET") then
 		self.isTargetingMe = UnitIsUnit(unit..'target', 'player')
 		mod:UpdateElement_Filters(self, event)
@@ -958,6 +961,11 @@ function mod:UpdateCVars()
 	--This one prevents classbar from being shown on friendly blizzard plates
 	-- we do this because it will otherwise break enemy nameplates after targeting a friendly one
 	E:LockCVar("nameplateResourceOnTarget", 0)
+	--讓堆疊血條的間距小一點
+	E:LockCVar("nameplateOverlapH",  0.3) --default is 0.8
+	E:LockCVar("nameplateOverlapV",  0.7) --default is 1.1
+	E:LockCVar("nameplateLargeTopInset", .08)
+	E:LockCVar("nameplateLargeBottomInset", .1)
 
 	--Player nameplate
 	E:LockCVar("nameplateShowSelf", (self.db.units.PLAYER.useStaticPosition == true or self.db.units.PLAYER.enable ~= true) and "0" or "1")

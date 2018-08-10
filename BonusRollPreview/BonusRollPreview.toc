@@ -1,0 +1,14 @@
+## Interface: 80000
+## Author: p3lim
+## Version: 80000.46-Release
+## Title: |cff880303EUI|r Bonus Roll Preview
+## Title-zhCN: |cff880303EUI|rBonus Roll Preview
+## Title-zhTW: |cff880303EUI|rBonus Roll Preview
+## Notes: Easily see what the bonus loot roll can yield
+## OptionalDeps: Wasabi, LibStub
+## SavedVariables: BonusRollPreviewDB
+
+## X-Curse-Project-ID: 54902
+## X-WoWI-ID: 22213
+
+BonusRollPreview.xml

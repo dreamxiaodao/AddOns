@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local AFKString = _G["AFK"]
 local AFK = E:NewModule('AFK', 'AceEvent-3.0', 'AceTimer-3.0');
 local CH = E:GetModule("Chat")
@@ -34,12 +34,12 @@ local Screenshot = Screenshot
 local SetCVar = SetCVar
 local UnitCastingInfo = UnitCastingInfo
 local UnitIsAFK = UnitIsAFK
+local CUSTOM_CLASS_COLORS = CUSTOM_CLASS_COLORS
 local DND = DND
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
 --Global variables that we don't cache, list them here for mikk's FindGlobals script
 -- GLOBALS: UIParent, PVEFrame, ElvUIAFKPlayerModel, ChatTypeInfo
--- GLOBALS: CUSTOM_CLASS_COLORS
 
 local CAMERA_SPEED = 0.035
 local ignoreKeys = {
@@ -58,6 +58,7 @@ end
 function AFK:UpdateTimer()
 	local time = GetTime() - self.startTime
 	self.AFKMode.bottom.time:SetFormattedText("%02d:%02d", floor(time/60), time % 60)
+	self.AFKMode.bottom.date:SetText(date())
 end
 
 function AFK:SetAFK(status)
@@ -217,7 +218,7 @@ local function Chat_OnEvent(self, event, arg1, arg2, arg3, arg4, arg5, arg6, arg
 	if ( arg14 ) then	--isMobile
 		message = ChatFrame_GetMobileEmbeddedTexture(info.r, info.g, info.b)..message;
 	end
-
+	
 	--Escape any % characters, as it may otherwise cause an "invalid option in format" error in the next step
 	message = gsub(message, "%%", "%%%%");
 
@@ -286,9 +287,9 @@ function AFK:Initialize()
 	self.AFKMode.bottom:Height(GetScreenHeight() * (1 / 10))
 
 	self.AFKMode.bottom.logo = self.AFKMode:CreateTexture(nil, 'OVERLAY')
-	self.AFKMode.bottom.logo:SetSize(320, 150)
-	self.AFKMode.bottom.logo:Point("CENTER", self.AFKMode.bottom, "CENTER", 0, 50)
-	self.AFKMode.bottom.logo:SetTexture("Interface\\AddOns\\ElvUI\\media\\textures\\logo.tga")
+	self.AFKMode.bottom.logo:SetSize(256, 128)
+	self.AFKMode.bottom.logo:Point("CENTER", self.AFKMode.bottom, "CENTER", 0, 10)
+	self.AFKMode.bottom.logo:SetTexture("Interface\\AddOns\\ElvUI\\media\\textures\\eui_logo.tga")
 
 	local factionGroup, size, offsetX, offsetY, nameOffsetX, nameOffsetY = E.myfaction, 140, -20, -16, -10, -28;
 	if factionGroup == "Neutral" then
@@ -317,6 +318,12 @@ function AFK:Initialize()
 	self.AFKMode.bottom.time:SetText("00:00")
 	self.AFKMode.bottom.time:Point("TOPLEFT", self.AFKMode.bottom.guild, "BOTTOMLEFT", 0, -6)
 	self.AFKMode.bottom.time:SetTextColor(0.7, 0.7, 0.7)
+
+	self.AFKMode.bottom.date = self.AFKMode.bottom:CreateFontString(nil, 'OVERLAY')
+	self.AFKMode.bottom.date:FontTemplate(nil, 20)
+	self.AFKMode.bottom.date:SetText("24/10/14 00:00:00")
+	self.AFKMode.bottom.date:SetPoint("RIGHT", self.AFKMode.bottom, "RIGHT", -10, 6)
+	self.AFKMode.bottom.date:SetTextColor(0.7, 0.7, 0.7)
 
 	--Use this frame to control position of the model
 	self.AFKMode.bottom.modelHolder = CreateFrame("Frame", nil, self.AFKMode.bottom)

@@ -17,6 +17,12 @@ local InCombatLockdown = InCombatLockdown
 -- GLOBALS: MICRO_BUTTONS, CharacterMicroButton, GuildMicroButtonTabard
 -- GLOBALS: GuildMicroButton, MicroButtonPortrait, CollectionsMicroButtonAlert
 
+local function onEnter()
+	if AB.db.microbar.mouseover then
+		E:UIFrameFadeIn(ElvUI_MicroBar, 0.2, ElvUI_MicroBar:GetAlpha(), AB.db.microbar.alpha)
+	end
+end
+
 local function onLeave()
 	if AB.db.microbar.mouseover then
 		E:UIFrameFadeOut(ElvUI_MicroBar, 0.2, ElvUI_MicroBar:GetAlpha(), 0)
@@ -206,5 +212,5 @@ function AB:SetupMicroBar()
 	self:UpdateMicroPositionDimensions()
 	MainMenuBarPerformanceBar:Kill()
 	CollectionsMicroButtonAlert:Kill()
-	E:CreateMover(microBar, 'MicrobarMover', L["Micro Bar"], nil, nil, nil, 'ALL,ACTIONBARS');
+	E:CreateMover(microBar, 'MicrobarMover', L["Micro Bar"], nil, nil, nil, 'ALL,ACTIONBARS', function() return E.db.actionbar.microbar.enabled; end);
 end

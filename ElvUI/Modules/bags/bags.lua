@@ -1266,6 +1266,15 @@ function B:GetGraysValue()
 	return value
 end
 
+local GrayWihterList = {
+	[114002] = true,
+	[140661] = true,
+	[140662] = true,
+	[140663] = true,
+	[140664] = true,
+	[140665] = true,
+}
+
 function B:VendorGrays(delete)
 	if (not MerchantFrame or not MerchantFrame:IsShown()) and not delete then
 		E:Print(L["You must be at a vendor."])
@@ -1280,7 +1289,7 @@ function B:VendorGrays(delete)
 				_, link, rarity, _, _, itype, _, _, _, _, itemPrice = GetItemInfo(itemID)
 				stackCount = select(2, GetContainerItemInfo(bag, slot)) or 1
 
-				if (rarity and rarity == 0) and (itype and itype ~= "Quest") then
+				if (rarity and rarity == 0) and (itype and itype ~= "Quest") and (not GrayWihterList[itemid]) then
 					if delete then
 						PickupContainerItem(bag, slot)
 						DeleteCursorItem()
@@ -1318,7 +1327,8 @@ end
 function B:ContructContainerFrame(name, isBank)
 	local f = CreateFrame('Button', name, E.UIParent);
 	f:SetTemplate('Transparent');
-	f:SetFrameStrata('HIGH');
+	f:SetFrameStrata('MEDIUM');
+	f:SetFrameLevel(20);
 	f.UpdateSlot = B.UpdateSlot;
 	f.UpdateAllSlots = B.UpdateAllSlots;
 	f.UpdateBagSlots = B.UpdateBagSlots;
@@ -1351,15 +1361,16 @@ function B:ContructContainerFrame(name, isBank)
 
 	--Allow dragging the frame around
 	f:SetMovable(true)
+	f:SetClampedToScreen(true)
 	f:RegisterForDrag("LeftButton", "RightButton")
 	f:RegisterForClicks("AnyUp");
-	f:SetScript("OnDragStart", function(self) if IsShiftKeyDown() then self:StartMoving() end end)
+	f:SetScript("OnDragStart", function(self) self:StartMoving() end)
 	f:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 	f:SetScript("OnClick", function(self) if IsControlKeyDown() then B.PostBagMove(self.mover) end end)
 	f:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_TOPLEFT", 0, 4)
 		GameTooltip:ClearLines()
-		GameTooltip:AddDoubleLine(L["Hold Shift + Drag:"], L["Temporary Move"], 1, 1, 1)
+		GameTooltip:AddDoubleLine(DRAG_MODEL, L["Temporary Move"], 1, 1, 1)
 		GameTooltip:AddDoubleLine(L["Hold Control + Right Click:"], L["Reset Position"], 1, 1, 1)
 
 		GameTooltip:Show()
@@ -1960,6 +1971,7 @@ function B:PostBagMove()
 end
 
 function B:Initialize()
+	self:LoadBagFilter()
 	self:LoadBagBar();
 
 	--Bag Mover (We want it created even if Bags module is disabled, so we can use it for default bags too)

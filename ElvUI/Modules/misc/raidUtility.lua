@@ -33,7 +33,7 @@ local GameTooltip_Hide = GameTooltip_Hide
 -- GLOBALS: CompactRaidFrameManagerDisplayFrameLeaderOptionsInitiateReadyCheck, CLOSE
 -- GLOBALS: CompactRaidFrameManagerDisplayFrameLockedModeToggle, RaidUtility_CloseButton
 -- GLOBALS: CompactRaidFrameManagerDisplayFrameLeaderOptionsInitiateRolePoll
--- GLOBALS: GameTooltip, RaidUtilityRoleIcons, NUM_RAID_GROUPS, CUSTOM_CLASS_COLORS
+-- GLOBALS: RaidUtilityRoleIcons, NUM_RAID_GROUPS, CUSTOM_CLASS_COLORS
 
 E.RaidUtility = RU
 local PANEL_HEIGHT = 100

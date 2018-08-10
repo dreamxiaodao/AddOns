@@ -11,65 +11,53 @@ local UnitPosition = UnitPosition
 local GetPlayerFacing = GetPlayerFacing
 local BreakUpLargeNumbers = BreakUpLargeNumbers
 local GetScreenWidth, GetScreenHeight = GetScreenWidth, GetScreenHeight
+local ItemUpgradeInfo = LibStub("LibItemUpgradeInfo-1.0")
 local C_Timer_After = C_Timer.After
 
+function E:GetItemLevel(itemLink)
+	if not itemLink or itemLink == "" then return 0; end
+
+	return ItemUpgradeInfo:GetUpgradedItemLevel(itemLink)
+end
 --Return short value of a number
-local shortValueDec
 function E:ShortValue(v)
-	shortValueDec = format("%%.%df", E.db.general.decimalLength or 1)
-	if E.db.general.numberPrefixStyle == "METRIC" then
-		if abs(v) >= 1e12 then
-			return format(shortValueDec.."T", v / 1e12)
-		elseif abs(v) >= 1e9 then
-			return format(shortValueDec.."G", v / 1e9)
+	if E.db["unitframe"].number == "K" then
+		if abs(v) >= 1e9 then
+			return ("%.2fb"):format(v / 1e9):gsub("%.?0+([kmb])$", "%1")
 		elseif abs(v) >= 1e6 then
-			return format(shortValueDec.."M", v / 1e6)
-		elseif abs(v) >= 1e3 then
-			return format(shortValueDec.."k", v / 1e3)
+			return ("%.2fm"):format(v / 1e6):gsub("%.?0+([kmb])$", "%1")
+		elseif abs(v) >= 1e3 or abs(v) <= -1e3 then
+			return ("%.1fk"):format(v / 1e3):gsub("%.?0+([km])$", "%1")
 		else
-			return format("%.0f", v)
+			return floor(v)
 		end
-	elseif E.db.general.numberPrefixStyle == "CHINESE" then
+	elseif E.db["unitframe"].number == "CNW" then
+		local y = '亿';
+		local w = '万';
+		if GetLocale() == 'zhTW' then
+			y = '億';
+			w = '萬';
+		end
+		if abs(v) > 1e8 then
+			return ("%.2f"..y):format(v / 1e8):gsub("%.?0+([km])$", "%1")
+		elseif abs(v) >= 1e4 or abs(v) <= -1e4 then
+			return ("%.1f"..w):format(v / 1e4):gsub("%.?0+([km])$", "%1")
+		else
+			return floor(v)
+		end
+	elseif E.db["unitframe"].number == "W" then
 		if abs(v) >= 1e8 then
-			return format(shortValueDec.."Y", v / 1e8)
-		elseif abs(v) >= 1e4 then
-			return format(shortValueDec.."W", v / 1e4)
+			return ("%.2fY"):format(v / 1e8):gsub("%.?0+([km])$", "%1")
+		elseif abs(v) >= 1e4 or abs(v) <= -1e4 then
+			return ("%.1fW"):format(v / 1e4):gsub("%.?0+([km])$", "%1")
 		else
-			return format("%.0f", v)
+			return floor(v)
 		end
-	elseif E.db.general.numberPrefixStyle == "KOREAN" then
-		if abs(v) >= 1e8 then
-			return format(shortValueDec.."억", v / 1e8)
-		elseif abs(v) >= 1e4 then
-			return format(shortValueDec.."만", v / 1e4)
-		elseif abs(v) >= 1e3 then
-			return format(shortValueDec.."천", v / 1e3)
+	elseif E.db["unitframe"].number == "0" then
+		if GetCVar("breakUpLargeNumbers") then
+			return BreakUpLargeNumbers(floor(v))
 		else
-			return format("%.0f", v)
-		end
-	elseif E.db.general.numberPrefixStyle == "GERMAN" then
-		if abs(v) >= 1e12 then
-			return format(shortValueDec.."Bio", v / 1e12)
-		elseif abs(v) >= 1e9 then
-			return format(shortValueDec.."Mrd", v / 1e9)
-		elseif abs(v) >= 1e6 then
-			return format(shortValueDec.."Mio", v / 1e6)
-		elseif abs(v) >= 1e3 then
-			return format(shortValueDec.."Tsd", v / 1e3)
-		else
-			return format("%.0f", v)
-		end
-	else
-		if abs(v) >= 1e12 then
-			return format(shortValueDec.."T", v / 1e12)
-		elseif abs(v) >= 1e9 then
-			return format(shortValueDec.."B", v / 1e9)
-		elseif abs(v) >= 1e6 then
-			return format(shortValueDec.."M", v / 1e6)
-		elseif abs(v) >= 1e3 then
-			return format(shortValueDec.."K", v / 1e3)
-		else
-			return format("%.0f", v)
+			return floor(v)
 		end
 	end
 end
@@ -478,7 +466,11 @@ function E:FormatMoney(amount, style, textonly)
 		end
 	elseif style == "BLIZZARD" then
 		if gold > 0 then
-			return format("%s%s %d%s %d%s", BreakUpLargeNumbers(gold), goldname, silver, silvername, copper, coppername)
+			if copper > 0 then
+				return format("%s%s %d%s %d%s", BreakUpLargeNumbers(gold), goldname, silver, silvername, copper, coppername)
+			else
+				return format("%s%s %d%s", BreakUpLargeNumbers(gold), goldname, silver, silvername)
+			end
 		elseif silver > 0 then
 			return format("%d%s %d%s", silver, silvername, copper, coppername)
 		else

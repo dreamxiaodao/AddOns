@@ -16,4 +16,5 @@
 	<Script file='elements\Detection.lua'/>
 	<Script file='elements\highlight.lua'/>
 	<Script file='elements\portrait.lua'/>
+	<Script file='elements\QuestWidget.lua'/>
 </Ui>

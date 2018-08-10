@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local UF = E:GetModule('UnitFrames');
 local _, ns = ...
 local ElvUF = ns.oUF
@@ -7,6 +7,7 @@ assert(ElvUF, "ElvUI was unable to locate oUF.")
 --Cache global variables
 --Lua functions
 local _G = _G
+local tinsert = table.insert
 --WoW API / Variables
 local CreateFrame = CreateFrame
 local MAX_BOSS_FRAMES = MAX_BOSS_FRAMES
@@ -16,6 +17,9 @@ local MAX_BOSS_FRAMES = MAX_BOSS_FRAMES
 
 local BossHeader = CreateFrame('Frame', 'BossHeader', UIParent)
 function UF:Construct_BossFrames(frame)
+	if E.db["clickset"].enable then  
+		frame.ClickSet = E.db["clickset"]
+	end
 	frame.RaisedElementParent = CreateFrame('Frame', nil, frame)
 	frame.RaisedElementParent.TextureParent = CreateFrame('Frame', nil, frame.RaisedElementParent)
 	frame.RaisedElementParent:SetFrameLevel(frame:GetFrameLevel() + 100)
@@ -33,6 +37,22 @@ function UF:Construct_BossFrames(frame)
 
 	frame.Debuffs = self:Construct_Debuffs(frame)
 	frame.DebuffHighlight = self:Construct_DebuffHighlight(frame)
+
+	tinsert(frame.__elements, UF.UpdateClickSet)
+	frame:RegisterEvent('UNIT_NAME_UPDATE', UF.UpdateClickSet)
+	frame:RegisterEvent('PLAYER_REGEN_ENABLED', UF.UpdateClickSet)
+	frame:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED', UF.UpdateClickSet)
+	frame.MouseGlow = UF:Construct_MouseGlow(frame)
+	frame:HookScript("OnEnter", function(self)
+		if self.db and self.db.mouseGlow then
+			self.MouseGlow:Show()
+		end
+	end)
+	frame:HookScript("OnLeave", function(self)
+		if self.db and self.db.mouseGlow then
+			self.MouseGlow:Hide()
+		end
+	end)
 
 	frame.Castbar = self:Construct_Castbar(frame)
 	frame.RaidTargetIndicator = self:Construct_RaidIcon(frame)

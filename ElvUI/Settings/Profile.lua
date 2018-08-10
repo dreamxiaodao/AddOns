@@ -1,6 +1,7 @@
 ﻿local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 
 P.gridSize = 64
+P.farmSize = 340
 
 --Core
 P['general'] = {
@@ -20,7 +21,7 @@ P['general'] = {
 	['bonusObjectivePosition'] = 'LEFT',
 	['talkingHeadFrameScale'] = 0.9,
 	['afk'] = true,
-	['numberPrefixStyle'] = 'ENGLISH',
+	['numberPrefixStyle'] = 'CHINESE',
 	['decimalLength'] = 1,
 
 	['fontSize'] = 12,
@@ -1368,6 +1369,13 @@ P['unitframe'] = {
 				['yOffset'] = 0,
 				['attachTextTo'] = 'Health',
 			},
+			['phaseIndicator'] = {
+				['enable'] = true,
+				['anchorPoint'] = 'CENTER',
+				['xOffset'] = 0,
+				['yOffset'] = 0,
+				['scale'] = 1,
+			},
 			['pvpIcon'] = {
 				['enable'] = false,
 				['anchorPoint'] = 'CENTER',
@@ -2318,6 +2326,13 @@ P['unitframe'] = {
 				['yOffset'] = 0,
 				['xOffset'] = 0,
 			},
+			['phaseIndicator'] = {
+				['enable'] = true,
+				['anchorPoint'] = 'CENTER',
+				['xOffset'] = 0,
+				['yOffset'] = 0,
+				['scale'] = 1,
+			},
 			['portrait'] = {
 				['enable'] = false,
 				['width'] = 45,
@@ -2627,9 +2642,16 @@ P['unitframe'] = {
 				['xOffset'] = 0,
 				['yOffset'] = 0,
 			},
+			['phaseIndicator'] = {
+				['enable'] = true,
+				['anchorPoint'] = 'CENTER',
+				['xOffset'] = 0,
+				['yOffset'] = 0,
+				['scale'] = 1,
+			},
 		},
 		['raid40'] = {
-			['enable'] = true,
+			['enable'] = false,
 			['rangeCheck'] = true,
 			['threatStyle'] = 'GLOW',
 			['orientation'] = 'MIDDLE',
@@ -2793,6 +2815,13 @@ P['unitframe'] = {
 				['attachToObject'] = 'Frame',
 				['xOffset'] = 0,
 				['yOffset'] = 0,
+			},
+			['phaseIndicator'] = {
+				['enable'] = true,
+				['anchorPoint'] = 'CENTER',
+				['xOffset'] = 0,
+				['yOffset'] = 0,
+				['scale'] = 1,
 			},
 		},
 		['raidpet'] = {
@@ -3107,7 +3136,7 @@ P['cooldown'] = {
 
 	['fonts'] = {
 		['enable'] = false,
-		['font'] = 'PT Sans Narrow',
+		['font'] = 'EUI',
 		['fontOutline'] = 'OUTLINE',
 		['fontSize'] = 18,
 	},
@@ -3123,6 +3152,7 @@ P['actionbar'] = {
 	['macrotext'] = false,
 	['hotkeytext'] = true,
 
+	['useRangeColorText'] = false,
 	['noRangeColor'] = { r = 0.8, g = 0.1, b = 0.1 },
 	['noPowerColor'] = { r = 0.5, g = 0.5, b = 1 },
 	['usableColor'] = { r = 1, g = 1, b = 1 },
@@ -3150,7 +3180,7 @@ P['actionbar'] = {
 
 		['fonts'] = {
 			['enable'] = false,
-			['font'] = 'PT Sans Narrow',
+			['font'] = 'EUI',
 			['fontOutline'] = 'OUTLINE',
 			['fontSize'] = 18,
 		},

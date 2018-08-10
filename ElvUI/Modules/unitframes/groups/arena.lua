@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local UF = E:GetModule('UnitFrames');
 local _, ns = ...
 local ElvUF = ns.oUF
@@ -8,18 +8,19 @@ assert(ElvUF, "ElvUI was unable to locate oUF.")
 --Lua functions
 local _G = _G
 local unpack = unpack
+local tinsert = table.insert
 --WoW API / Variables
 local CreateFrame = CreateFrame
 local GetArenaOpponentSpec = GetArenaOpponentSpec
 local GetSpecializationInfoByID = GetSpecializationInfoByID
 local IsInInstance = IsInInstance
 local UnitExists = UnitExists
+local CUSTOM_CLASS_COLORS = CUSTOM_CLASS_COLORS
 local LOCALIZED_CLASS_NAMES_MALE = LOCALIZED_CLASS_NAMES_MALE
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
 --Global variables that we don't cache, list them here for mikk's FindGlobals script
 -- GLOBALS: UIParent, ArenaHeaderMover
--- GLOBALS: CUSTOM_CLASS_COLORS
 
 local ArenaHeader = CreateFrame('Frame', 'ArenaHeader', UIParent)
 
@@ -59,13 +60,18 @@ function UF:Construct_ArenaFrames(frame)
 	frame.Name = self:Construct_NameText(frame)
 
 	if(not frame.isChild) then
+		if E.db["clickset"].enable then  
+			frame.ClickSet = E.db["clickset"]
+		end
 		frame.Power = self:Construct_PowerBar(frame, true, true, 'LEFT')
 
 		frame.Portrait3D = self:Construct_Portrait(frame, 'model')
 		frame.Portrait2D = self:Construct_Portrait(frame, 'texture')
 
 		frame.Buffs = self:Construct_Buffs(frame)
+
 		frame.Debuffs = self:Construct_Debuffs(frame)
+
 		frame.Castbar = self:Construct_Castbar(frame)
 		frame.HealthPrediction = self:Construct_HealComm(frame)
 		frame.MouseGlow = self:Construct_MouseGlow(frame)
@@ -74,6 +80,11 @@ function UF:Construct_ArenaFrames(frame)
 		frame.PVPSpecIcon = self:Construct_PVPSpecIcon(frame)
 		frame.Range = self:Construct_Range(frame)
 		frame:SetAttribute("type2", "focus")
+
+		tinsert(frame.__elements, UF.UpdateClickSet)
+		frame:RegisterEvent('UNIT_NAME_UPDATE', UF.UpdateClickSet)
+		frame:RegisterEvent('PLAYER_REGEN_ENABLED', UF.UpdateClickSet)
+		frame:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED', UF.UpdateClickSet)
 
 		frame.customTexts = {}
 		frame.InfoPanel = self:Construct_InfoPanel(frame)
@@ -186,6 +197,7 @@ function UF:Update_ArenaFrames(frame, db)
 	--Trinket
 	UF:Configure_Trinket(frame)
 
+	
 	--Range
 	UF:Configure_Range(frame)
 

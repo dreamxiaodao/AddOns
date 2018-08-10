@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local UF = E:GetModule('UnitFrames');
 local _, ns = ...
 local ElvUF = ns.oUF
@@ -43,6 +43,7 @@ function UF:Construct_PlayerFrame(frame)
 	--Combo points was moved to the ClassPower element, so all classes need to have a ClassBar now.
 	frame.ClassPower = self:Construct_ClassBar(frame)
 	frame.ClassBar = 'ClassPower'
+	frame.TankShield = self:Construct_TankShield(frame)
 
 	--Some classes need another set of different classbars.
 	if E.myclass == "DEATHKNIGHT" then
@@ -61,18 +62,21 @@ function UF:Construct_PlayerFrame(frame)
 	frame.MouseGlow = self:Construct_MouseGlow(frame)
 	frame.TargetGlow = self:Construct_TargetGlow(frame)
 	frame.RaidTargetIndicator = self:Construct_RaidIcon(frame)
+	
 	frame.RestingIndicator = self:Construct_RestingIndicator(frame)
 	frame.CombatIndicator = self:Construct_CombatIndicator(frame)
 	frame.PvPText = self:Construct_PvPIndicator(frame)
 	frame.DebuffHighlight = self:Construct_DebuffHighlight(frame)
 	frame.HealthPrediction = self:Construct_HealComm(frame)
 	frame.AuraBars = self:Construct_AuraBarHeader(frame)
+	frame.Swing = self:Construct_SwingBar(frame)
+	frame.GCD = self:Construct_GCDBar(frame)
 	frame.InfoPanel = self:Construct_InfoPanel(frame)
 	frame.PvPIndicator = self:Construct_PvPIcon(frame)
 	frame.CombatFade = true
 	frame.customTexts = {}
 
-	frame:Point('BOTTOMLEFT', E.UIParent, 'BOTTOM', -413, 68) --Set to default position
+	frame:Point('BOTTOMLEFT', E.UIParent, 'BOTTOM', -413, 135) --Set to default position
 	E:CreateMover(frame, frame:GetName()..'Mover', L["Player Frame"], nil, nil, nil, 'ALL,SOLO')
 
 	frame.unitframeType = "player"
@@ -186,6 +190,11 @@ function UF:Update_PlayerFrame(frame, db)
 	if E.db.unitframe.units.target.aurabar.attachTo == "PLAYER_AURABARS" and ElvUF_Target then
 		UF:Configure_AuraBars(ElvUF_Target)
 	end
+
+	--Swing bar
+	UF:Configure_SwingBar(frame)
+	--TankShield
+	UF:Configure_TankShield(frame)
 
 	--PvP & Prestige Icon
 	UF:Configure_PVPIcon(frame)

@@ -325,7 +325,7 @@ function AB:CreateBarPet()
 	self:RegisterEvent('PET_BAR_UPDATE_COOLDOWN', PetActionBar_UpdateCooldowns);
 
 
-	E:CreateMover(bar, 'PetAB', L["Pet Bar"], nil, nil, nil, 'ALL,ACTIONBARS');
+	E:CreateMover(bar, 'PetAB', L["Pet Bar"], nil, nil, nil, 'ALL,ACTIONBARS', function() return E.db.actionbar.barPet.enabled; end);
 	self:PositionAndSizeBarPet();
 	self:UpdatePetBindings()
 

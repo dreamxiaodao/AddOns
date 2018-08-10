@@ -53,7 +53,7 @@ local LE_GAME_ERR_NOT_ENOUGH_MONEY = LE_GAME_ERR_NOT_ENOUGH_MONEY
 --Global variables that we don't cache, list them here for mikk's FindGlobals script
 -- GLOBALS: RaidBossEmoteFrame, ChatTypeInfo, QueueStatusMinimapButton, LFGInvitePopup
 
-local interruptMsg = INTERRUPTED.." %s's \124cff71d5ff\124Hspell:%d:0\124h[%s]\124h\124r!"
+local interruptMsg = "EUI:%s ".. INTERRUPT.." %s's \124cff71d5ff\124Hspell:%d:0\124h[%s]\124h\124r!"
 
 function M:ErrorFrameToggle(event)
 	if not E.db.general.hideErrorFrame then return end
@@ -156,9 +156,9 @@ function M:MERCHANT_CLOSED()
 end
 
 function M:MERCHANT_SHOW()
-	if E.db.general.vendorGrays then
-		C_Timer_After(0.5, VendorGrays)
-	end
+--	if E.db.general.vendorGrays then
+--		C_Timer_After(0.5, VendorGrays)
+--	end
 
 	local autoRepair = E.db.general.autoRepair
 	if IsShiftKeyDown() or autoRepair == 'NONE' or not CanMerchantRepair() then return end

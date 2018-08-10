@@ -4,6 +4,7 @@ local DT = E:GetModule('DataTexts')
 --Cache global variables
 --Lua functions
 local time = time
+local select = select
 local max = math.max
 local join = string.join
 --WoW API / Variables
@@ -12,7 +13,7 @@ local CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
 
 local events = {SPELL_HEAL = true, SPELL_PERIODIC_HEAL = true}
 local playerID, petID
-local healTotal = 0
+local healTotal, lastHealAmount = 0, 0
 local combatTime = 0
 local timeStamp = 0
 local lastSegment = 0
@@ -23,6 +24,7 @@ local function Reset()
 	timeStamp = 0
 	combatTime = 0
 	healTotal = 0
+	lastHealAmount = 0
 end
 
 local function GetHPS(self)
@@ -35,7 +37,7 @@ local function GetHPS(self)
 	self.text:SetFormattedText(displayString, L["HPS"], E:ShortValue(hps))
 end
 
-local function OnEvent(self, event)
+local function OnEvent(self, event, ...)
 	lastPanel = self
 
 	if event == 'PLAYER_ENTERING_WORLD' then

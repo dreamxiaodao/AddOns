@@ -3,7 +3,7 @@ local B = E:GetModule("Blizzard")
 
 E.Options.args.general = {
 	type = "group",
-	name = L["General"],
+	name = '01.'..L["General"],
 	order = 1,
 	childGroups = "tab",
 	get = function(info) return E.db.general[ info[#info] ] end,
@@ -12,7 +12,7 @@ E.Options.args.general = {
 		intro = {
 			order = 3,
 			type = "description",
-			name = L["ELVUI_DESC"],
+			name = L["ELVUI_DESC"]:gsub('ElvUI', E.UIName),
 		},
 		general = {
 			order = 4,
@@ -164,21 +164,21 @@ E.Options.args.general = {
 					get = function(info) return E.global.general.showMissingTalentAlert end,
 					set = function(info, value) E.global.general.showMissingTalentAlert = value; E:StaticPopup_Show("GLOBAL_RL") end,
 				},
-				autoScale = {
+				voiceOverlay = {
 					order = 20,
+					type = "toggle",
+					name = E.NewSign..L["Voice Overlay"],
+					desc = L["Replace Blizzard's Voice Overlay. |cffFF0000WARNING: WORK IN PROGRESS|r"],
+					get = function(info) return E.private.general.voiceOverlay end,
+					set = function(info, value) E.private.general.voiceOverlay = value; E:StaticPopup_Show("PRIVATE_RL") end
+				},
+				autoScale = {
+					order = 21,
 					name = L["Auto Scale"],
 					desc = L["Automatically scale the User Interface based on your screen resolution"],
 					type = "toggle",
 					get = function(info) return E.global.general.autoScale end,
 					set = function(info, value) E.global.general[ info[#info] ] = value; E:StaticPopup_Show("GLOBAL_RL") end
-				},
-				raidUtility = {
-					order = 21,
-					type = "toggle",
-					name = RAID_CONTROL,
-					desc = L["Enables the ElvUI Raid Control panel."],
-					get = function(info) return E.private.general.raidUtility end,
-					set = function(info, value) E.private.general.raidUtility = value; E:StaticPopup_Show("PRIVATE_RL") end
 				},
 				minUiScale = {
 					order = 22,
@@ -188,8 +188,35 @@ E.Options.args.general = {
 					get = function(info) return E.global.general.minUiScale end,
 					set = function(info, value) E.global.general.minUiScale = value; E:StaticPopup_Show("GLOBAL_RL") end
 				},
-				talkingHeadFrameScale = {
+				uiscale = {
 					order = 23,
+					name = L["UI Scale"],
+					desc = L["Controls the scaling of the entire User Interface"],
+					disabled = function(info) return E.global.general.autoScale end,
+					type = "range",
+					min = E.global.general.minUiScale, max = 1.15, step = 0.01,
+					isPercent = true,
+					set = function(info, value) SetCVar("uiScale", value); E:UIScale() end,
+					get = function() return tonumber(format('%.2f', GetCVar('uiScale'))) end,
+				},
+				raidUtility = {
+					order = 30,
+					type = "toggle",
+					name = RAID_CONTROL,
+					desc = L["Enables the ElvUI Raid Control panel."],
+					get = function(info) return E.private.general.raidUtility end,
+					set = function(info, value) E.private.general.raidUtility = value; E:StaticPopup_Show("PRIVATE_RL") end
+				},
+				minUiScale = {
+					order = 31,
+					type = "range",
+					name = L["Lowest Allowed UI Scale"],
+					softMin = 0.20, softMax = 0.64, step = 0.01,
+					get = function(info) return E.global.general.minUiScale end,
+					set = function(info, value) E.global.general.minUiScale = value; E:StaticPopup_Show("GLOBAL_RL") end
+				},
+				talkingHeadFrameScale = {
+					order = 32,
 					type = "range",
 					name = L["Talking Head Scale"],
 					isPercent = true,
@@ -198,7 +225,7 @@ E.Options.args.general = {
 					set = function(info, value) E.db.general.talkingHeadFrameScale = value; B:ScaleTalkingHeadFrame() end,
 				},
 				commandBarSetting = {
-					order = 24,
+					order = 34,
 					type = "select",
 					name = L["Order Hall Command Bar"],
 					get = function(info) return E.global.general.commandBarSetting end,
@@ -210,21 +237,7 @@ E.Options.args.general = {
 						["ENABLED_RESIZEPARENT"] = L["Enable + Adjust Movers"],
 					},
 				},
-				numberPrefixStyle = {
-					order = 25,
-					type = "select",
-					name = L["Unit Prefix Style"],
-					desc = L["The unit prefixes you want to use when values are shortened in ElvUI. This is mostly used on UnitFrames."],
-					get = function(info) return E.db.general.numberPrefixStyle end,
-					set = function(info, value) E.db.general.numberPrefixStyle = value; E:StaticPopup_Show("CONFIG_RL") end,
-					values = {
-						["METRIC"] = "Metric (k, M, G)",
-						["ENGLISH"] = "English (K, M, B)",
-						["CHINESE"] = "Chinese (W, Y)",
-						["KOREAN"] = "Korean (천, 만, 억)",
-						["GERMAN"] = "German (Tsd, Mio, Mrd)"
-					},
-				},
+
 				decimalLength = {
 					order = 26,
 					type = "range",
@@ -255,6 +268,13 @@ E.Options.args.general = {
 					type = "range",
 					min = 4, softMax = 32, step = 1,
 					set = function(info, value) E.db.general[ info[#info] ] = value; E:UpdateMedia(); E:UpdateFontTemplates(); end,
+				},
+				questfontSize = {
+					order = 3,
+					name = L["Quest Font Size"],
+					type = "range",
+					min = 4, max = 22, step = 1,
+					set = function(info, value) ObjectiveFont:SetFont(E.media.normFont,value);E.db.general.questfontSize=value; end,
 				},
 				font = {
 					type = "select", dialogControl = 'LSM30_Font',
@@ -433,6 +453,61 @@ E.Options.args.general = {
 						local t = E.db.general[ info[#info] ]
 						t.r, t.g, t.b, t.a = r, g, b, a
 						E:UpdateMedia()
+					end,
+				},
+				transparent = {
+					type = "toggle",
+					order = 35,
+					name = L["Transparent Theme"],
+					desc = L["Transparent Theme desc"],
+					set = function(info, value)
+						E.db.general.transparent = value
+						E.db.unitframe.transparent = value
+						if value then E:SetupTheme("transparent", true) else E:SetupTheme("classic", true) end
+						E:StaticPopup_Show("PRIVATE_RL")
+					end,
+				},
+				transparentStyle = {
+					type = "range",
+					order = 36,
+					min = 1, max = 2, step = 1,
+					name = L['Transparent Theme Style'],
+					desc = L["1:New Style;\n2:Old Style"],
+					disabled = function() return not E.db.general.transparent end,
+					set = function(info, value)
+						E.db.general.transparentStyle = value
+						E:StaticPopup_Show("PRIVATE_RL")
+					end,
+				},
+				ShadowEnable = {
+					type = "toggle",
+					order = 37,
+					name = L["Shadow"],
+					set = function(info, value)
+						E.db.general.ShadowEnable = value;
+						E:StaticPopup_Show("PRIVATE_RL")
+					end,
+				},
+				ShadowWidth = {
+					type = "range",
+					order = 38,
+					min = 1, max = 10, step = 1,
+					name = L["Shadow Width"],
+				--	disabled = function() return not E.db.general.ShadowEnable end,
+					set = function(info, value)
+						E.db.general.ShadowWidth = value;
+						E:StaticPopup_Show("PRIVATE_RL")
+					end,
+				},
+				ShadowAlpha = {
+					type = "range",
+					min = 0, max = 1, step = 0.1,
+					order = 39,
+					name = L["Shadow Alpha"],
+					disabled = function() return not E.db.general.ShadowEnable end,
+					set = function(info, value)
+						E.db.general.ShadowAlpha = value;
+						E:StaticPopup_Show("PRIVATE_RL")
 					end,
 				},
 			},

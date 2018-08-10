@@ -19,6 +19,7 @@ local GetCombatRatingBonus = GetCombatRatingBonus
 local GetCVar, SetCVar, GetCVarBool = GetCVar, SetCVar, GetCVarBool
 local GetDodgeChance, GetParryChance = GetDodgeChance, GetParryChance
 local GetFunctionCPUUsage = GetFunctionCPUUsage
+
 local GetSpecialization, GetActiveSpecGroup = GetSpecialization, GetActiveSpecGroup
 local GetSpecializationRole = GetSpecializationRole
 local InCombatLockdown = InCombatLockdown
@@ -56,8 +57,21 @@ E.version = GetAddOnMetadata("ElvUI", "Version");
 E.wowpatch, E.wowbuild = GetBuildInfo(); E.wowbuild = tonumber(E.wowbuild);
 E.resolution = ({GetScreenResolutions()})[GetCurrentResolution()] or GetCVar("gxWindowedResolution"); --only used for now in our install.lua line 779
 E.screenwidth, E.screenheight = GetPhysicalScreenSize();
+
+E.mylevel = UnitLevel('player');
+E.Version = GetAddOnMetadata("EuiScript", "Version")
+E.Ver = E.Version or E.version
+if E.Version then E.Version = string.sub(E.Version,1,8); end
+E.ValColor = '|cff1784d1'
+E.wowpatch, E.wowbuild = GetBuildInfo(); E.wowbuild = tonumber(E.wowbuild);
+
 E.isMacClient = IsMacClient();
+if ((GetLocale() == 'zhCN') or (GetLocale() == 'zhTW')) then E.zhlocale = true; else E.zhlocale = false; end;
+E.myfullname = E.myname..'-'..E.myrealm
+if ((GetLocale() == 'zhCN') or (GetLocale() == 'zhTW')) then E.zhlocale = true; else E.zhlocale = false; end;
+E.myfullname = E.myname..'-'..E.myrealm
 E.LSM = LSM;
+E.NewSign = "|TInterface\\OptionsFrame\\UI-OptionsFrame-NewFeatureIcon:14:14|t" -- not used by ElvUI yet, but plugins like BenikUI and MerathilisUI use it.
 
 --Tables
 E["media"] = {};
@@ -177,7 +191,7 @@ E.noop = function() end;
 local hexvaluecolor
 function E:Print(...)
 	hexvaluecolor = self["media"].hexvaluecolor or "|cff00b3ff"
-	print(hexvaluecolor..'ElvUI:|r', ...)
+	print(hexvaluecolor..'EUI:|r', ...)
 end
 
 --Workaround for people wanting to use white and it reverting to their class color.
@@ -369,7 +383,7 @@ local function MasqueCallback(_, Group, _, _, _, _, Disabled)
 end
 
 if Masque then
-	Masque:Register("ElvUI", MasqueCallback)
+--	Masque:Register("ElvUI", MasqueCallback)
 end
 
 function E:RequestBGInfo()
@@ -401,10 +415,10 @@ function E:PLAYER_ENTERING_WORLD()
 		self.BGTimer = nil;
 	end
 
-	if tonumber(E.version) >= 10.60 and not E.global.userInformedNewChanges1 then
-		E:StaticPopup_Show("ELVUI_INFORM_NEW_CHANGES")
-		E.global.userInformedNewChanges1 = true
-	end
+--	if tonumber(E.version) >= 10.60 and not E.global.userInformedNewChanges1 then
+--		E:StaticPopup_Show("ELVUI_INFORM_NEW_CHANGES")
+--		E.global.userInformedNewChanges1 = true
+--	end
 end
 
 function E:ValueFuncCall()
@@ -610,7 +624,7 @@ end
 
 function E:IncompatibleAddOn(addon, module)
 	E.PopupDialogs['INCOMPATIBLE_ADDON'].button1 = addon
-	E.PopupDialogs['INCOMPATIBLE_ADDON'].button2 = 'ElvUI '..module
+	E.PopupDialogs['INCOMPATIBLE_ADDON'].button2 = 'EUI '..module
 	E.PopupDialogs['INCOMPATIBLE_ADDON'].addon = addon
 	E.PopupDialogs['INCOMPATIBLE_ADDON'].module = module
 	E:StaticPopup_Show('INCOMPATIBLE_ADDON', addon, module)
@@ -630,12 +644,33 @@ function E:CheckIncompatible()
 		E:IncompatibleAddOn('TidyPlates', 'NamePlates')
 	end
 
+	if IsAddOnLoaded('Kui_Nameplates') and E.private.nameplates.enable then
+		E:IncompatibleAddOn('Kui_Nameplates', 'NamePlates')
+	end
+	if IsAddOnLoaded('rNamePlates') and E.private.nameplates.enable then
+		E:IncompatibleAddOn('rNamePlates', 'NamePlates')
+	end
+	if IsAddOnLoaded('EKplates') and E.private.nameplates.enable then
+		E:IncompatibleAddOn('EKplates', 'NamePlates')
+	end
+
 	if IsAddOnLoaded('Aloft') and E.private.nameplates.enable then
 		E:IncompatibleAddOn('Aloft', 'NamePlates')
 	end
 
 	if IsAddOnLoaded('Healers-Have-To-Die') and E.private.nameplates.enable then
 		E:IncompatibleAddOn('Healers-Have-To-Die', 'NamePlates')
+	end
+
+	if not IsAddOnLoaded('EuiScript') then
+		E:StaticPopup_Show('EUISCRIPT_REQUEST')
+	end
+	if IsAddOnLoaded('Duowan') or IsAddOnLoaded('BigFoot') then
+		E:StaticPopup_Show('BigDW_Loaded')
+	end
+	if GetLocale() ~= 'zhCN' then
+		DisableAddOn('NetEaseFeedback')
+		DisableAddOn('MeetingStone')
 	end
 end
 
@@ -870,9 +905,9 @@ end
 
 function E:SendMessage()
 	if IsInRaid() then
-		C_ChatInfo_SendAddonMessage("ELVUI_VERSIONCHK", E.version, (not IsInRaid(LE_PARTY_CATEGORY_HOME) and IsInRaid(LE_PARTY_CATEGORY_INSTANCE)) and "INSTANCE_CHAT" or "RAID")
+		C_ChatInfo_SendAddonMessage("EUI_VERSIONCHK", E.Version, (not IsInRaid(LE_PARTY_CATEGORY_HOME) and IsInRaid(LE_PARTY_CATEGORY_INSTANCE)) and "INSTANCE_CHAT" or "RAID")
 	elseif IsInGroup() then
-		C_ChatInfo_SendAddonMessage("ELVUI_VERSIONCHK", E.version, (not IsInGroup(LE_PARTY_CATEGORY_HOME) and IsInGroup(LE_PARTY_CATEGORY_INSTANCE)) and "INSTANCE_CHAT" or "PARTY")
+		C_ChatInfo_SendAddonMessage("EUI_VERSIONCHK", E.Version, (not IsInGroup(LE_PARTY_CATEGORY_HOME) and IsInGroup(LE_PARTY_CATEGORY_INSTANCE)) and "INSTANCE_CHAT" or "PARTY")
 	end
 
 	if E.SendMSGTimer then
@@ -888,13 +923,13 @@ local function SendRecieve(_, event, prefix, message, _, sender)
 	if event == "CHAT_MSG_ADDON" then
 		if(sender == myName) then return end
 
-		if prefix == "ELVUI_VERSIONCHK" and not E.recievedOutOfDateMessage then
-			if(tonumber(message) ~= nil and tonumber(message) > tonumber(E.version)) then
+		if prefix == "EUI_VERSIONCHK" and not E.recievedOutOfDateMessage then
+			if(E.Version and tonumber(message) ~= nil and tonumber(message) > tonumber(E.Version)) then
 				E:Print(L["ElvUI is out of date. You can download the newest version from www.tukui.org. Get premium membership and have ElvUI automatically updated with the Tukui Client!"])
 
-				if((tonumber(message) - tonumber(E.version)) >= 0.05) then
-					E:StaticPopup_Show("ELVUI_UPDATE_AVAILABLE")
-				end
+			--	if((tonumber(message) - tonumber(E.version)) >= 0.05) then
+			--		E:StaticPopup_Show("ELVUI_UPDATE_AVAILABLE")
+			--	end
 
 				E.recievedOutOfDateMessage = true
 			end
@@ -910,7 +945,7 @@ local function SendRecieve(_, event, prefix, message, _, sender)
 	end
 end
 
-C_ChatInfo.RegisterAddonMessagePrefix('ELVUI_VERSIONCHK')
+C_ChatInfo.RegisterAddonMessagePrefix('EUI_VERSIONCHK')
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("GROUP_ROSTER_UPDATE")
@@ -979,6 +1014,9 @@ function E:UpdateAll(ignoreInstall)
 	DT.db = self.db.datatexts
 	DT:LoadDataTexts()
 
+	local LO = self:GetModule('Layout')
+	LO:UpdateActionbarInfobar()
+
 	local NP = self:GetModule('NamePlates')
 	NP.db = self.db.nameplates
 	NP:StyleFilterInitializeAllFilters()
@@ -997,6 +1035,15 @@ function E:UpdateAll(ignoreInstall)
 	T:UpdatePosition()
 	T:ToggleEnable()
 
+	local RLBox = self:GetModule('RLBox')
+	RLBox.db = self.db.RLBox
+	RLBox.Players = {}
+	RLBox:Toggle()
+
+	self:GetModule('CooldownFlash').db = self.db.CooldownFlash
+	self:GetModule('AutoButton').db = self.db.euiscript.autobutton
+	self:GetModule('AuraWatch').db = self.db.AuraWatch
+	self:GetModule('SoraClassTimer').db = self.db.SoraClassTimer
 	self:GetModule('Auras').db = self.db.auras
 	self:GetModule('Tooltip').db = self.db.tooltip
 
@@ -1007,6 +1054,14 @@ function E:UpdateAll(ignoreInstall)
 	if(ElvUIPlayerDebuffs) then
 		E:GetModule('Auras'):UpdateHeader(ElvUIPlayerDebuffs)
 	end
+
+	local RaidCD = self:GetModule('RAIDCD')
+	RaidCD.db = self.db.euiscript
+	RaidCD:CreateAnchor()
+	RaidCD:ToggleRaidCD()
+	
+	local AutoButton = E:GetModule('AutoButton')
+	AutoButton:ToggleAutoButton()
 
 	if self.private.install_complete == nil or (self.private.install_complete and type(self.private.install_complete) == 'boolean') or (self.private.install_complete and type(tonumber(self.private.install_complete)) == 'number' and tonumber(self.private.install_complete) <= 3.83) then
 		if not ignoreInstall then
@@ -1503,6 +1558,59 @@ function E:GetTopCPUFunc(msg)
 	self:Print("Calculating CPU Usage differences (module: "..(checkCore or module)..", showall: "..tostring(showall)..", minCalls: "..tostring(minCalls)..", delay: "..tostring(delay)..")")
 end
 
+function E:GetServerName(unit)
+	local playerServer = GetRealmName()
+	if not unit or unit =="player" then
+		return playerServer
+	else
+		local _,server =UnitName(unit)
+		if server then
+			return server
+		else
+			return playerServer
+		end
+	end
+end
+
+function E:IsEuiAddOn(name)
+	if (GetAddOnMetadata(name, "X-Revision") ~= "ElvUI") then
+		return false;
+	end
+
+	return true;
+end
+
+function E:IsDisabledAddon(name)
+	local name, title, notes, loadable, reason, security, newVersion = GetAddOnInfo(name);
+	if (reason == "DISABLED") then
+		return true;
+	else
+		return false;
+	end
+end
+
+function E:IsConfigurableAddOn(name)
+	if E:IsEuiAddOn(name) and (not E:IsDisabledAddon(name)) then
+		return true;
+	else
+		return false;
+	end
+end
+
+function E:ExecuteChatCommand(text)
+	if text and text:sub(1, 1) == "." then
+		ChatFrame1EditBox:SetText(text);
+		local _, catch = pcall(ChatEdit_SendText, ChatFrame1EditBox);
+		if catch then
+			return false;
+		else
+			return true;
+		end
+	else
+		return false;
+	end
+end
+
 local function SetOriginalHeight()
 	if InCombatLockdown() then
 		E:RegisterEvent("PLAYER_REGEN_ENABLED", SetOriginalHeight)
@@ -1606,7 +1714,7 @@ function E:Initialize(loginFrame)
 	collectgarbage("collect");
 
 	if self.db.general.loginmessage then
-		print(select(2, E:GetModule('Chat'):FindURL("CHAT_MSG_DUMMY", format(L["LOGIN_MSG"], self["media"].hexvaluecolor, self["media"].hexvaluecolor, self.version)))..'.')
+	--	print(select(2, E:GetModule('Chat'):FindURL("CHAT_MSG_DUMMY", format(L["LOGIN_MSG"], self["media"].hexvaluecolor, self["media"].hexvaluecolor, self.version)))..'.')
 	end
 
 	if OrderHallCommandBar then
@@ -1627,5 +1735,44 @@ function E:Initialize(loginFrame)
 				self:UnregisterEvent(event)
 			end
 		end)
+	end
+
+	
+	if E.zhlocale then
+		E:Print(L["捞月狗App 正式上线, 魔兽玩家聊天交友必备软件, 数据进度查询应有尽有.访问:http://t.cn/R2ozOhg"])
+		local gga = CreateFrame("Frame", "testGGA", UIParent)
+		gga.sec = 0
+		gga:SetScript("OnUpdate", function(self, elapsed)
+			self.sec = self.sec + elapsed
+			if self.sec > 1234 then
+				E:Print(L["捞月狗App 正式上线, 魔兽玩家聊天交友必备软件, 数据进度查询应有尽有.访问:http://t.cn/R2ozOhg"])
+				self.sec = 0
+			end
+		end)
+	end
+
+	-- We must run the CVar for cameraDistanceMaxFactor on login, otherwise it won't get saved.
+	hooksecurefunc("BlizzardOptionsPanel_SetupControl", function(control)
+		if control == InterfaceOptionsCameraPanelMaxDistanceSlider then
+			SetCVar("cameraDistanceMaxZoomFactor", E.db.euiscript.camerafactor/15)
+			SetCVar("cameraDistanceMoveSpeed", E.db.euiscript.cameraspeed)
+			MoveViewOutStart (50000)
+		end
+	end)
+	if E.db.euiscript.SpellQueueWindowToggle then
+		SetCVar("SpellQueueWindow", E.db.euiscript.SpellQueueWindow);
+	end
+	
+	if E.private.actionbar.masque.actionbars or E.private.actionbar.masque.petBar or E.private.actionbar.masque.stanceBar or E.private.auras.masque.consolidatedBuffs or E.private.auras.masque.debuffs or E.private.auras.masque.buffs then
+		if not IsAddOnLoaded("Masque") then
+			local _, _, _, _, reason = GetAddOnInfo("Masque")
+			if reason ~= "MISSING" and reason ~= "DISABLED" then
+				LoadAddOn("Masque")
+				Masque = LibStub("Masque", true)
+			end
+		end
+		if Masque then
+			Masque:Register("ElvUI", MasqueCallback)
+		end
 	end
 end

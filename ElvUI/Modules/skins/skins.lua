@@ -221,6 +221,7 @@ function S:CropIcon(texture, parent)
 	end
 end
 
+
 function S:HandleScrollBar(frame, thumbTrimY, thumbTrimX)
 	if frame:GetName() then
 		if frame.Background then frame.Background:SetTexture(nil) end
@@ -673,7 +674,7 @@ function S:HandleDropDownFrame(frame, width)
 
 	frame:CreateBackdrop("Default")
 	frame.backdrop:Point("TOPLEFT", 20, -2)
-	frame.backdrop:Point("BOTTOMRIGHT", button, "BOTTOMRIGHT", 2, -2)
+	frame.backdrop:Point("BOTTOMRIGHT", button, "BOTTOMRIGHT", 2, -2)	
 end
 
 function S:HandleCheckBox(frame, noBackdrop, noReplaceTextures)

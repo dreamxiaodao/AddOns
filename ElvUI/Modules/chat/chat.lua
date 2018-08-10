@@ -157,7 +157,13 @@ local DEFAULT_STRINGS = {
 	RAID_LEADER = L["RL"],
 	INSTANCE_CHAT = L["I"],
 	INSTANCE_CHAT_LEADER = L["IL"],
+	-- zhCN
+	Battleground = L['BG'],
+	Guild = L['G'],
+	raid = L['R'],
+	Party = L['P'],
 	PET_BATTLE_COMBAT_LOG = PET_BATTLE_COMBAT_LOG,
+	PET_BATTLE_INFO = PET_BATTLE_INFO,
 }
 
 local hyperlinkTypes = {
@@ -354,8 +360,14 @@ function CH:GetGroupDistribution()
 end
 
 function CH:InsertEmotions(msg)
-	for k,v in pairs(smileyKeys) do
-		msg = gsub(msg,k,"|T"..smileyPack[v]..":16|t");
+	if E.zhlocale then
+		for k, v in pairs(self.emotes) do
+			msg = gsub(msg, v[1], "|T"..v[2]..":16|t");
+		end
+	else
+		for k,v in pairs(smileyKeys) do
+			msg = gsub(msg,k,"|T"..smileyPack[v]..":16|t");
+		end
 	end
 	return msg;
 end
@@ -516,7 +528,7 @@ function CH:StyleChat(frame)
 	_G[format(editbox:GetName().."Left", id)]:Kill()
 	_G[format(editbox:GetName().."Mid", id)]:Kill()
 	_G[format(editbox:GetName().."Right", id)]:Kill()
-	editbox:SetTemplate('Default', true)
+	editbox:SetTemplate('notrans')
 	editbox:SetAltArrowKeyMode(CH.db.useAltKey)
 	editbox:SetAllPoints(LeftChatDataPanel)
 	self:SecureHook(editbox, "AddHistoryLine", "ChatEdit_AddHistory")
@@ -737,16 +749,22 @@ function CH:UpdateAnchors()
 	for _, frameName in pairs(CHAT_FRAMES) do
 		local frame = _G[frameName..'EditBox']
 		if not frame then break; end
-		local noBackdrop = (self.db.panelBackdrop == "HIDEBOTH" or self.db.panelBackdrop == "RIGHT")
-		frame:ClearAllPoints()
-		if not E.db.datatexts.leftChatPanel and E.db.chat.editBoxPosition == 'BELOW_CHAT' then
-			frame:Point("TOPLEFT", ChatFrame1, "BOTTOMLEFT", noBackdrop and -1 or -4, noBackdrop and -1 or -4)
-			frame:Point("BOTTOMRIGHT", ChatFrame1, "BOTTOMRIGHT", noBackdrop and 10 or 7, -LeftChatTab:GetHeight()-(noBackdrop and 1 or 4))
-		elseif E.db.chat.editBoxPosition == 'BELOW_CHAT' then
-			frame:SetAllPoints(LeftChatDataPanel)
+		if not E.db.datatexts.leftChatPanel then
+			local noBackdrop = (self.db.panelBackdrop == "HIDEBOTH" or self.db.panelBackdrop == "RIGHT")
+			frame:ClearAllPoints()
+		--	if(E.db.chat.editBoxPosition == 'BELOW_CHAT') then --左聊天框下面的信息面板禁用时，强制使输入框显示在聊天框上方
+		--		frame:Point("TOPLEFT", ChatFrame1, "BOTTOMLEFT", noBackdrop and -1 or -4, noBackdrop and -1 or -4)
+		--		frame:Point("BOTTOMRIGHT", ChatFrame1, "BOTTOMRIGHT", noBackdrop and 10 or 7, -LeftChatTab:GetHeight()-(noBackdrop and 1 or 4))
+		--	else
+				frame:Point("BOTTOMLEFT", ChatFrame1, "TOPLEFT", noBackdrop and -1 or -1, noBackdrop and 1 or 4)
+				frame:Point("TOPRIGHT", ChatFrame1, "TOPRIGHT", noBackdrop and 10 or 4, LeftChatTab:GetHeight()+(noBackdrop and 1 or 4))
+		--	end
 		else
-			frame:Point("BOTTOMLEFT", ChatFrame1, "TOPLEFT", noBackdrop and -1 or -1, noBackdrop and 1 or 4)
-			frame:Point("TOPRIGHT", ChatFrame1, "TOPRIGHT", noBackdrop and 10 or 4, LeftChatTab:GetHeight()+(noBackdrop and 1 or 4))
+			if E.db.datatexts.leftChatPanel and E.db.chat.editBoxPosition == 'BELOW_CHAT' then
+				frame:SetAllPoints(LeftChatDataPanel)
+			else
+				frame:SetAllPoints(LeftChatTab)
+			end
 		end
 	end
 
@@ -883,7 +901,7 @@ function CH:PositionChat(override)
 					BASE_OFFSET = BASE_OFFSET - 24
 					chat:Point("BOTTOMLEFT", LeftChatToggleButton, "BOTTOMLEFT", 1, 1)
 				end
-				chat:SetSize(E.db.chat.panelWidth - 11, (E.db.chat.panelHeight - BASE_OFFSET))
+				chat:SetSize(E.db.chat.panelWidth - 11, E.db["euiscript"].chatbar and (E.db.chat.panelHeight - BASE_OFFSET - 26) or (E.db.chat.panelHeight - BASE_OFFSET))
 
 				--Pass a 2nd argument which prevents an infinite loop in our ON_FCF_SavePositionAndDimensions function
 				if chat:GetLeft() then
@@ -1581,7 +1599,7 @@ function CH:ChatFrame_MessageEventHandler(self, event, arg1, arg2, arg3, arg4, a
 			end
 
 			-- Player Flags
-			local pflag, chatIcon = "", specialChatIcons[playerName] or CH:GetPluginIcon(playerName)
+			local pflag, chatIcon, pluginChatIcon = "", specialChatIcons[playerName], CH:GetPluginIcon(playerName)
 			if arg6 ~= "" then -- Blizzard Flags
 				if arg6 == "GM" or arg6 == "DEV" then -- Blizzard Icon, this was sent by a GM or Dev.
 					pflag = "|TInterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16|t";
@@ -1594,9 +1612,13 @@ function CH:ChatFrame_MessageEventHandler(self, event, arg1, arg2, arg3, arg4, a
 			if lfgRole and (type == "PARTY_LEADER" or type == "PARTY" or type == "RAID" or type == "RAID_LEADER" or type == "INSTANCE_CHAT" or type == "INSTANCE_CHAT_LEADER") then
 				pflag = pflag..lfgRole
 			end
-			-- Plugin Flags
+			-- Special Chat Icon
 			if chatIcon then
 				pflag = pflag..chatIcon
+			end
+			-- Plugin Chat Icon
+			if pluginChatIcon then
+				pflag = pflag..pluginChatIcon
 			end
 
 			if ( usingDifferentLanguage ) then
@@ -2113,6 +2135,20 @@ function CH:ON_FCF_SavePositionAndDimensions(_, noLoop)
 	end
 end
 
+-- Remove player's realm name
+local function RemoveRealmName(self, event, msg, author, ...)--5.4.2
+	local realm = string.gsub(E.myrealm, " ", "")
+	if msg:find("-" .. realm) then
+		return false, gsub(msg, "%-"..realm, ""), author, ...
+	end
+end
+
+function CH:JoinBigfootChannel()
+	JoinTemporaryChannel(L["BigFootChannel"])
+--	ChatFrame_RemoveChannel(DEFAULT_CHAT_FRAME, L["BigFootChannel"])
+	ChatFrame_AddChannel(DEFAULT_CHAT_FRAME, L["BigFootChannel"])		
+end
+
 function CH:SocialQueueIsLeader(playerName, leaderName)
 	if leaderName == playerName then
 		return true
@@ -2312,14 +2348,19 @@ function CH:Initialize()
 	self:RegisterEvent('SOCIAL_QUEUE_UPDATE', 'SocialQueueEvent')
 	self:RegisterEvent('PET_BATTLE_CLOSE')
 	
-	self:RegisterEvent("VOICE_CHAT_CHANNEL_MEMBER_SPEAKING_STATE_CHANGED", "Test");
-	self:RegisterEvent("VOICE_CHAT_CHANNEL_MEMBER_ENERGY_CHANGED", "Test");
-	self:RegisterEvent("VOICE_CHAT_CHANNEL_TRANSMIT_CHANGED", "Test");
-	self:RegisterEvent("VOICE_CHAT_COMMUNICATION_MODE_CHANGED", "Test");
-	self:RegisterEvent("VOICE_CHAT_CHANNEL_MEMBER_REMOVED", "Test");
-	self:RegisterEvent("VOICE_CHAT_CHANNEL_REMOVED", "Test");
-	self:RegisterEvent("VOICE_CHAT_CHANNEL_DEACTIVATED", "Test");
+	if E.private.general.voiceOverlay then
+		self:RegisterEvent("VOICE_CHAT_CHANNEL_MEMBER_SPEAKING_STATE_CHANGED", "VoiceOverlay");
+		self:RegisterEvent("VOICE_CHAT_CHANNEL_MEMBER_ENERGY_CHANGED", "VoiceOverlay");
+		self:RegisterEvent("VOICE_CHAT_CHANNEL_TRANSMIT_CHANGED", "VoiceOverlay");
+		self:RegisterEvent("VOICE_CHAT_COMMUNICATION_MODE_CHANGED", "VoiceOverlay");
+		self:RegisterEvent("VOICE_CHAT_CHANNEL_MEMBER_REMOVED", "VoiceOverlay");
+		self:RegisterEvent("VOICE_CHAT_CHANNEL_REMOVED", "VoiceOverlay");
+		self:RegisterEvent("VOICE_CHAT_CHANNEL_DEACTIVATED", "VoiceOverlay");
+	end
 
+	self:LoadChatbar()
+	self:LoadChatEmote()
+	self:LoadStatReport()
 
 	self:SetupChat()
 	self:UpdateAnchors()
@@ -2328,6 +2369,7 @@ function CH:Initialize()
 	end
 
 	self:SecureHook("FCF_SetWindowAlpha")
+	ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", RemoveRealmName)--5.4.2
 
 	GeneralDockManagerOverflowButton:ClearAllPoints()
 	GeneralDockManagerOverflowButton:Point('BOTTOMRIGHT', LeftChatTab, 'BOTTOMRIGHT', -2, 2)
@@ -2426,6 +2468,10 @@ function CH:Initialize()
 	close:EnableMouse(true)
 
 	S:HandleCloseButton(close)
+
+	if E.db.chat.autojoin then
+		CH:ScheduleTimer('JoinBigfootChannel', 12.5)
+	end
 
 	CombatLogQuickButtonFrame_CustomAdditionalFilterButton:Size(20, 22)
 	CombatLogQuickButtonFrame_CustomAdditionalFilterButton:Point("TOPRIGHT", CombatLogQuickButtonFrame_Custom, "TOPRIGHT", 0, -1)
@@ -2527,7 +2573,7 @@ function CH:DeconfigureHead(memberID, channelID)
 	frame:Hide()
 end
 
-function CH:Test(event, ...)
+function CH:VoiceOverlay(event, ...)
 	if event == "VOICE_CHAT_CHANNEL_MEMBER_SPEAKING_STATE_CHANGED" then
 		local memberID, channelID, isTalking = ...
 
@@ -2538,7 +2584,6 @@ function CH:Test(event, ...)
 			CH.TalkingList[memberID] = nil
 			self:DeconfigureHead(memberID, channelID)
 		end
-
 	elseif event == "VOICE_CHAT_CHANNEL_MEMBER_ENERGY_CHANGED" then
 		local memberID, channelID, volume = ...
 		local frame = CH:GetHeadByID(memberID)
@@ -2559,7 +2604,6 @@ function CH:Test(event, ...)
 end
 
 function CH:SetChatHeadOrientation(position)
-
 	if position == "TOP" then
 		for i=1, self.maxHeads do
 			self.ChatHeadFrame[i]:ClearAllPoints()
@@ -2569,7 +2613,7 @@ function CH:SetChatHeadOrientation(position)
 				self.ChatHeadFrame[i]:SetPoint("TOP", self.ChatHeadFrame[i - 1], "BOTTOM", 0, -E.Border*3)
 			end
 		end
-	else 
+	else
 		for i=1, self.maxHeads do
 			self.ChatHeadFrame[i]:ClearAllPoints()
 			if i == 1 then
@@ -2577,7 +2621,7 @@ function CH:SetChatHeadOrientation(position)
 			else
 				self.ChatHeadFrame[i]:SetPoint("BOTTOM", self.ChatHeadFrame[i - 1], "TOP", 0, E.Border*3)
 			end
-		end	
+		end
 	end
 end
 

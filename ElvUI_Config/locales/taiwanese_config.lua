@@ -509,7 +509,26 @@ L["Unit Prefix Style"] = true
 L["Vendor Gray Detailed Report"] = true
 L["When you go AFK display the AFK screen."] = "當你離開時顯示AFK界面"
 
+--Aura Filter
+---Whitelists
+L['Boss'] = true
+L['Personal'] = true
+L['nonPersonal'] = "Non Personal"
+L['notCastByUnit'] = "Not Cast By Unit"
+L['Dispellable'] = true
+L['notDispellable'] = "Not Dispellable"
+L['CastByNPC'] = "Cast By NPC"
+L['CastByUnit'] = "Cast By Unit"
+L['CastByPlayers'] = "Cast By Players"
+---Blacklists
+L['blockNonPersonal'] = "[Block] Non Personal"
+L['blockCastByPlayers'] = "[Block] Cast By Players"
+L['blockNoDuration'] = "[Block] No Duration"
+L['blockDispellable'] = "[Block] Dispellable"
+L['blockNotDispellable'] = "[Block] Not Dispellable"
+
 --Media
+L["Replace Blizzard's Voice Overlay."] = "替代暴雪語音提示框"
 L["Applies the font and font size settings throughout the entire user interface. Note: Some font size settings will be skipped due to them having a smaller font size by default."] = "把該字體設置應用到所有ElvUI設置中去,但是某些設置並不會被改變."
 L["Applies the primary texture to all statusbars."] = "將主要材質應用到所有狀態條"
 L["Apply Font To All"] = "應用字體到所有"
@@ -1108,6 +1127,7 @@ L["Powers"] = "能量"
 L["Priority"] = "優先級"
 L["Profile Specific"] = "角色專用"
 L["PvP & Prestige Icon"] = "PvP和威望圖標"
+L["Phase Indicator"] = '相位指示器'
 L["PvP Text"] = "PvP文字"
 L["PVP Trinket"] = "PVP 飾品"
 L["Raid Icon"] = "團隊圖示"

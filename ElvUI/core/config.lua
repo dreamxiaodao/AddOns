@@ -32,7 +32,9 @@ E.ConfigModeLayouts = {
 	'PARTY',
 	'ARENA',
 	'RAID',
-	'ACTIONBARS'
+	'ACTIONBARS',
+	'CHAT',
+	'EUI',
 }
 
 E.ConfigModeLocalizedStrings = {
@@ -42,7 +44,9 @@ E.ConfigModeLocalizedStrings = {
 	PARTY = PARTY,
 	ARENA = ARENA,
 	RAID = RAID,
-	ACTIONBARS = ACTIONBARS_LABEL
+	ACTIONBARS = ACTIONBARS_LABEL,
+	CHAT = CHAT,
+	EUI = L["euiscript"],
 }
 
 function E:Grid_Show()
@@ -240,7 +244,7 @@ function E:CreateMoverPopup()
 	local title = header:CreateFontString("OVERLAY")
 	title:FontTemplate()
 	title:Point("CENTER", header, "CENTER")
-	title:SetText('ElvUI')
+	title:SetText('EUI')
 
 	local desc = f:CreateFontString("ARTWORK")
 	desc:SetFontObject("GameFontHighlight")
@@ -259,6 +263,34 @@ function E:CreateMoverPopup()
 
 	snapping:SetScript("OnClick", function(self)
 		E.db.general.stickyFrames = self:GetChecked()
+	end)
+
+	local hideDisableFrame = CreateFrame("CheckButton", f:GetName()..'CheckButton3', f, "OptionsCheckButtonTemplate")
+	_G[hideDisableFrame:GetName() .. "Text"]:SetText(L["hideDisableFrame"])
+
+	hideDisableFrame:SetScript("OnShow", function(self)
+		self:SetChecked(E.db.general.hideDisableFrame)
+	end)
+
+	hideDisableFrame:SetScript("OnClick", function(self)
+		E.db.general.hideDisableFrame = self:GetChecked()
+		E:ToggleMovers(E.ConfigurationMode, 'ALL')
+	end)
+
+	local nudge = CreateFrame('CheckButton', f:GetName()..'CheckButton2', f, 'OptionsCheckButtonTemplate')
+	_G[nudge:GetName().. "Text"]:SetText(L['Nudge'])
+
+	nudge:SetScript("OnShow", function(self)
+		self:SetChecked(E.db.general.nudgeWindow)
+	end)
+
+	nudge:SetScript("OnClick", function(self)
+		E.db.general.nudgeWindow = self:GetChecked() or false
+		if E.db.general.nudgeWindow and not ElvUIMoverNudgeWindow:IsShown() then
+			ElvUIMoverNudgeWindow:Show()
+		elseif not E.db.general.nudgeWindow and ElvUIMoverNudgeWindow:IsShown() then
+			ElvUIMoverNudgeWindow:Hide()
+		end
 	end)
 
 	local lock = CreateFrame("Button", f:GetName()..'CloseButton', f, "OptionsButtonTemplate")
@@ -307,13 +339,15 @@ function E:CreateMoverPopup()
 	align.text:SetText(L["Grid Size:"])
 
 	--position buttons
-	snapping:Point("BOTTOMLEFT", 14, 10)
+	snapping:Point("BOTTOMLEFT", 14, 30)
+	hideDisableFrame:Point("BOTTOMLEFT", 14, 10)
 	lock:Point("BOTTOMRIGHT", -14, 14)
 	align:Point('TOPRIGHT', lock, 'TOPLEFT', -4, -2)
-
+	nudge:Point("BOTTOMLEFT", 14, 50)
 	S:HandleCheckBox(snapping)
 	S:HandleButton(lock)
 	S:HandleEditBox(align)
+	S:HandleCheckBox(nudge)
 
 	f:RegisterEvent('PLAYER_REGEN_DISABLED')
 	f:SetScript('OnEvent', function(self)
@@ -330,6 +364,7 @@ function E:CreateMoverPopup()
 	configMode.text = configMode:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
 	configMode.text:Point('RIGHT', configMode.backdrop, 'LEFT', -2, 0)
 	configMode.text:SetText(L["Config Mode:"])
+	configMode.text:SetTextColor(1,0,0)
 
 	UIDropDownMenu_Initialize(configMode, ConfigMode_Initialize);
 

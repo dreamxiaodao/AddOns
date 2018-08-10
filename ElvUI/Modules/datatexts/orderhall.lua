@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local DT = E:GetModule('DataTexts')
 
 --Cache global variables
@@ -33,7 +33,10 @@ local ORDER_HALL_MISSIONS = ORDER_HALL_MISSIONS
 -- GLOBALS: GarrisonLandingPage
 
 local GARRISON_CURRENCY = 1220
-local GARRISON_ICON = format("|T%s:16:16:0:0:64:64:4:60:4:60|t", select(3, GetCurrencyInfo(GARRISON_CURRENCY)))
+local GARRISON_ICON = format("|T%s:16:16:0:0:64:64:4:60:4:60|t", select(3, GetCurrencyInfo(GARRISON_CURRENCY)), 16, 16)
+local MAGIC_ICON = format("|T%s:16:16:0:0:64:64:4:60:4:60|t", select(3, GetCurrencyInfo(1155)), 16, 16)--1155远古魔力
+local SUMMONABLE_ICON = format("|T%s:16:16:0:0:64:64:4:60:4:60|t", select(3, GetCurrencyInfo(1342)), 16, 16)--1342抗魔联军战争物资
+local VOID_ICON =  format("|T%s:16:16:0:0:64:64:4:60:4:60|t", select(3, GetCurrencyInfo(1226)), 16, 16)--1226虚空碎片
 
 local function sortFunction(a, b)
 	return a.missionEndTime < b.missionEndTime
@@ -122,9 +125,14 @@ local function OnEnter(self, _, noUpdate)
 	if (talentTreeIDs) then
 		-- this is a talent that has completed, but has not been seen in the talent UI yet.
 		local completeTalentID = C_Garrison_GetCompleteTalent(LE_GARRISON_TYPE_7_0);
-		for _, treeID in ipairs(talentTreeIDs) do
-			local _, _, tree = C_Garrison_GetTalentTreeInfoForID(treeID);
-			for _, talent in ipairs(tree) do
+		for treeIndex, treeID in ipairs(talentTreeIDs) do
+			local _, _, tree
+			if E.wowbuild >= 24904 then
+				_, _, tree = C_Garrison_GetTalentTreeInfoForID(treeID);
+			else
+				_, _, tree = C_Garrison_GetTalentTreeInfoForID(LE_GARRISON_TYPE_7_0, treeID);
+			end
+			for talentIndex, talent in ipairs(tree) do
 				local showTalent = false;
 				if (talent.isBeingResearched) then
 					showTalent = true;
@@ -144,8 +152,21 @@ local function OnEnter(self, _, noUpdate)
 			end
 		end
 	end
+	
+	-- Get Magic MAX
+	local hasMagicResources = false
+	local localName, numMagicResources, _, _, _, maxMagicResources = GetCurrencyInfo(1155)
+	if numMagicResources and numMagicResources > -1 then
+		hasMagicResources = true
+		if not firstLine then
+			DT.tooltip:AddLine(" ")
+		end
+		firstLine = false
+		DT.tooltip:AddLine(C_ChallengeMode.GetMapUIInfo(1033))
+		DT.tooltip:AddDoubleLine(localName..":", numMagicResources.." / "..maxMagicResources, 1,1,1, 1, 1, 1)
+	end
 
-	if(numMissions > 0 or hasFollowers or hasLoose or hasTalent) then
+	if(numMissions > 0 or hasFollowers or hasLoose or hasTalent or hasMagicResources) then
 		DT.tooltip:Show()
 	else
 		DT.tooltip:Hide()
@@ -179,7 +200,18 @@ local function OnEvent(self, event)
 	end
 
 	local _, numGarrisonResources = GetCurrencyInfo(GARRISON_CURRENCY)
-	self.text:SetFormattedText("%s %s", GARRISON_ICON, numGarrisonResources)
+	local _, numMagicResources = GetCurrencyInfo(1155)
+	local _, numSummonableResources = GetCurrencyInfo(1342)
+	local _, numVoidResources = GetCurrencyInfo(1226)
+	local haveSummonable = numSummonableResources > 0;	
+	local haveVoid = numVoidResources > 0;
+	if haveSummonable then
+		self.text:SetFormattedText("%s %s %s %s",  GARRISON_ICON, numGarrisonResources, SUMMONABLE_ICON, numSummonableResources)
+	elseif haveVoid then
+		self.text:SetFormattedText("%s %s %s %s", GARRISON_ICON, numGarrisonResources, VOID_ICON, numVoidResources)
+	else
+		self.text:SetFormattedText("%s %s %s %s", GARRISON_ICON, numGarrisonResources, MAGIC_ICON, numMagicResources)
+	end
 end
 
 DT:RegisterDatatext('Orderhall', {"PLAYER_ENTERING_WORLD", "CURRENCY_DISPLAY_UPDATE", "GARRISON_LANDINGPAGE_SHIPMENTS", "GARRISON_TALENT_UPDATE", "GARRISON_TALENT_COMPLETE"}, OnEvent, nil, OnClick, OnEnter)

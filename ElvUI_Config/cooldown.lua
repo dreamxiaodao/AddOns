@@ -254,7 +254,7 @@ end
 
 E.Options.args.cooldown = {
 	type = 'group',
-	name = L["Cooldown Text"],
+	name = '03.'.. L["Cooldown Text"],
 	childGroups = "tab",
 	get = function(info) return E.db.cooldown[ info[#info] ] end,
 	set = function(info, value) E.db.cooldown[ info[#info] ] = value; E:UpdateCooldownSettings('global'); end,

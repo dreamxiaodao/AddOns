@@ -8,7 +8,7 @@ local GameTooltip = _G['GameTooltip']
 
 E.Options.args.chat = {
 	type = "group",
-	name = L["Chat"],
+	name = '06.'..L["Chat"],
 	childGroups = "tab",
 	get = function(info) return E.db.chat[ info[#info] ] end,
 	set = function(info, value) E.db.chat[ info[#info] ] = value end,
@@ -134,6 +134,26 @@ E.Options.args.chat = {
 						E.db.chat.useAltKey = value;
 						CH:UpdateSettings()
 					end,
+				},
+				autojoin = {
+					order = 11,
+					name = L["Auto join BigFootChannel"],
+					type = "toggle",
+					set = function(info, value)
+						E.db.chat.autojoin = value
+						if value then
+							JoinTemporaryChannel(L["BigFootChannel"])
+							ChatFrame_RemoveChannel(DEFAULT_CHAT_FRAME, L["BigFootChannel"])
+							ChatFrame_AddChannel(DEFAULT_CHAT_FRAME, L["BigFootChannel"])
+						else
+							SlashCmdList["LEAVE"](L["BigFootChannel"])
+						end
+					end,
+				},
+				chatItemLevel = {
+					order = 11,
+					type = 'toggle',
+					name = L["chat Item Level"],
 				},
 				autoClosePetBattleLog = {
 					order = 12,

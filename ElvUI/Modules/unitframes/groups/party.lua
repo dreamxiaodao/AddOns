@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local UF = E:GetModule('UnitFrames');
 local _, ns = ...
 local ElvUF = ns.oUF
@@ -7,6 +7,7 @@ assert(ElvUF, "ElvUI was unable to locate oUF.")
 --Cache global variables
 --Lua functions
 local _G = _G
+local tinsert = table.insert
 --WoW API / Variables
 local CreateFrame = CreateFrame
 local InCombatLockdown = InCombatLockdown
@@ -27,6 +28,10 @@ function UF:Construct_PartyFrames()
 	self.BORDER = E.Border
 	self.SPACING = E.Spacing
 	self.SHADOW_SPACING = 3
+
+	if E.db["clickset"].enable then
+		self.ClickSet = E.db["clickset"]
+	end
 	if self.isChild then
 		self.Health = UF:Construct_HealthBar(self, true)
 		self.MouseGlow = UF:Construct_MouseGlow(self)
@@ -58,11 +63,17 @@ function UF:Construct_PartyFrames()
 		self.GroupRoleIndicator = UF:Construct_RoleIcon(self)
 		self.RaidRoleFramesAnchor = UF:Construct_RaidRoleFrames(self)
 		self.MouseGlow = UF:Construct_MouseGlow(self)
+		self.PhaseIndicator = UF:Construct_PhaseIcon(self)
 		self.TargetGlow = UF:Construct_TargetGlow(self)
 		self.ThreatIndicator = UF:Construct_Threat(self)
 		self.RaidTargetIndicator = UF:Construct_RaidIcon(self)
 		self.ReadyCheckIndicator = UF:Construct_ReadyCheckIcon(self)
 		self.HealthPrediction = UF:Construct_HealComm(self)
+		tinsert(self.__elements, UF.UpdateClickSet)
+		self:RegisterEvent('UNIT_NAME_UPDATE', UF.UpdateClickSet)
+		self:RegisterEvent('PLAYER_REGEN_ENABLED', UF.UpdateClickSet)
+		self:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED', UF.UpdateClickSet)
+
 		self.customTexts = {}
 		self.Sparkle = CreateFrame("Frame", nil, self)
 		self.Sparkle:SetAllPoints(self.Health)
@@ -215,6 +226,8 @@ function UF:Update_PartyFrames(frame, db)
 
 		UF:UpdateNameSettings(frame)
 
+		UF:Configure_PhaseIcon(frame)
+
 		UF:Configure_Power(frame)
 
 		UF:Configure_Portrait(frame)
@@ -229,12 +242,12 @@ function UF:Update_PartyFrames(frame, db)
 
 		UF:Configure_RaidIcon(frame)
 
-		UF:Configure_ResurrectionIcon(frame)
-
 		UF:Configure_DebuffHighlight(frame)
 
 		UF:Configure_RoleIcon(frame)
-
+		
+		UF:Configure_ResurrectionIcon(frame)
+		
 		UF:Configure_HealComm(frame)
 
 		UF:Configure_RaidRoleIcons(frame)
@@ -244,6 +257,7 @@ function UF:Update_PartyFrames(frame, db)
 		UF:Configure_ReadyCheckIcon(frame)
 
 		UF:Configure_CustomTexts(frame)
+
 	end
 
 	UF:Configure_Range(frame)

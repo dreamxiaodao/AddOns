@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local UF = E:GetModule('UnitFrames');
 local _, ns = ...
 local ElvUF = ns.oUF
@@ -23,7 +23,12 @@ function UF:Construct_TargetFrame(frame)
 	frame.Portrait3D = self:Construct_Portrait(frame, 'model')
 	frame.Portrait2D = self:Construct_Portrait(frame, 'texture')
 
+	frame.RangeText = self:Construct_RangeText(frame)
+
 	frame.Buffs = self:Construct_Buffs(frame)
+	frame:RegisterEvent('PLAYER_TARGET_CHANGED', UF.UpdateTargetRare)
+	frame:RegisterEvent('UNIT_TARGET', UF.UpdateTargetRare)
+	frame.Rare = self:Construct_RareElite(frame) --Rare Elite Texture	
 
 	frame.Debuffs = self:Construct_Debuffs(frame)
 	frame.ThreatIndicator = self:Construct_Threat(frame)
@@ -38,9 +43,10 @@ function UF:Construct_TargetFrame(frame)
 	frame.TargetGlow = self:Construct_TargetGlow(frame)
 	frame.AuraBars = self:Construct_AuraBarHeader(frame)
 	frame.Range = self:Construct_Range(frame)
+	frame.PhaseIndicator = self:Construct_PhaseIcon(frame)
 	frame.PvPIndicator = self:Construct_PvPIcon(frame)
 	frame.customTexts = {}
-	frame:Point('BOTTOMRIGHT', E.UIParent, 'BOTTOM', 413, 68)
+	frame:Point('BOTTOMRIGHT', E.UIParent, 'BOTTOM', 413, 135)
 	E:CreateMover(frame, frame:GetName()..'Mover', L["Target Frame"], nil, nil, nil, 'ALL,SOLO')
 
 	frame.unitframeType = "target"
@@ -130,11 +136,20 @@ function UF:Update_TargetFrame(frame, db)
 	--Range
 	UF:Configure_Range(frame)
 
+	-- PhaseIndicator
+	UF:Configure_PhaseIcon(frame)
+
 	--PvP & Prestige Icon
 	UF:Configure_PVPIcon(frame)
 
 	--CustomTexts
 	UF:Configure_CustomTexts(frame)
+
+	--Rare
+	UF:Configure_RareElite(frame)
+
+	--RangeText
+	UF:Configure_RangeText(frame)
 
 	E:SetMoverSnapOffset(frame:GetName()..'Mover', -(12 + db.castbar.height))
 	frame:UpdateAllElements("ElvUI_UpdateAllElements")

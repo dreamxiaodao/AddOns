@@ -10,6 +10,7 @@ local pairs, type, error = pairs, type, error
 local len = string.len
 --WoW API / Variables
 local CreateFrame = CreateFrame
+local UnitGUID = UnitGUID
 local C_Timer_After = C_Timer.After
 local InCombatLockdown = InCombatLockdown
 local IsInInstance = IsInInstance
@@ -244,6 +245,35 @@ function DT:LoadDataTexts()
 	end
 
 	local fontTemplate = LSM:Fetch("font", self.db.font)
+	
+	if self.db.panels.AB1Infobar.left == '' and self.db.panels.AB1Infobar.middle == '' and self.db.panels.AB1Infobar.right == '' then
+		if AB1Infobar then AB1Infobar:Hide() end
+	else
+		if AB1Infobar then AB1Infobar:Show() end
+	end
+	if AB5Infobar then
+		if self.db.panels.AB5Infobar == '' then
+			AB5Infobar:Hide()
+		else
+			AB5Infobar:Show()
+		end
+	end
+	if AB3Infobar then
+		if self.db.panels.AB3Infobar == '' then
+			AB3Infobar:Hide()
+		else
+			AB3Infobar:Show()
+		end
+	end
+	local panelnum = 3
+	if self.db.panels.TopDataTextsBar3['left'] == '' then panelnum = panelnum -1; end
+	if self.db.panels.TopDataTextsBar3['middle'] == '' then panelnum = panelnum -1; end
+	if self.db.panels.TopDataTextsBar3['right'] == '' then panelnum = panelnum -1; end
+	if TopDataTextsBar3 then if panelnum == 0 then TopDataTextsBar3:Hide() else TopDataTextsBar3:Show() end end
+	if TopDataTextsBar1 then if self.db.panels.TopDataTextsBar1 == '' then TopDataTextsBar1:Hide() else TopDataTextsBar1:Show() end end
+	if TopDataTextsBar2 then if self.db.panels.TopDataTextsBar2 == '' then TopDataTextsBar2:Hide() else TopDataTextsBar2:Show() end end
+	if TopDataTextsBar4 then if self.db.panels.TopDataTextsBar4 == '' then TopDataTextsBar4:Hide() else TopDataTextsBar4:Show() end end
+	
 	local inInstance, instanceType = IsInInstance()
 	local isInPVP = inInstance and (instanceType == "pvp")
 	local pointIndex, isBGPanel, enableBGPanel

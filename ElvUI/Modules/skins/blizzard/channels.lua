@@ -4,9 +4,9 @@ local S = E:GetModule('Skins')
 --Cache global variables
 --Lua functions
 local _G = _G
-local pairs = pairs
+local pairs, select = pairs, select
 --WoW API / Variables
-
+local C_Timer_After = C_Timer.After
 --Global variables that we don't cache, list them here for mikk's FindGlobals script
 -- GLOBALS:
 

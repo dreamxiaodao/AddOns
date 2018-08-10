@@ -341,7 +341,7 @@ end
 function AB:CreateBarShapeShift()
 	bar:CreateBackdrop('Default');
 	bar.backdrop:SetAllPoints();
-	bar:Point('TOPLEFT', E.UIParent, 'TOPLEFT', 4, -4);
+	bar:Point('TOPLEFT', E.UIParent, 'TOPLEFT', 4, -28);
 	bar.buttons = {};
 
 	self:HookScript(bar, 'OnEnter', 'Bar_OnEnter');
@@ -353,7 +353,7 @@ function AB:CreateBarShapeShift()
 	self:RegisterEvent('UPDATE_SHAPESHIFT_FORM', 'StyleShapeShift');
 	self:RegisterEvent('ACTIONBAR_PAGE_CHANGED', 'StyleShapeShift');
 
-	E:CreateMover(bar, 'ShiftAB', L["Stance Bar"], nil, -3, nil, 'ALL,ACTIONBARS');
+	E:CreateMover(bar, 'ShiftAB', L["Stance Bar"], nil, -3, nil, 'ALL,ACTIONBARS', function() return E.db.actionbar.stanceBar.enabled; end);
 	self:AdjustMaxStanceButtons();
 	self:PositionAndSizeBarShapeShift();
 	self:StyleShapeShift();

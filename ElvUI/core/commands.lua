@@ -65,7 +65,7 @@ local function OnCallback(command)
 end
 
 function E:DelayScriptCall(msg)
-	local secs, command = msg:match("^(%S+)%s+(.*)$")
+	local secs, command = msg:match("^([^%s]+)%s+(.*)$")
 	secs = tonumber(secs)
 	if (not secs) or (#command == 0) then
 		self:Print("usage: /in <seconds> <command>")
@@ -221,6 +221,7 @@ function E:LoadCommands()
 	self:RegisterChatCommand("in", "DelayScriptCall")
 	self:RegisterChatCommand("ec", "ToggleConfig")
 	self:RegisterChatCommand("elvui", "ToggleConfig")
+	self:RegisterChatCommand("eui", "ToggleConfig")
 	self:RegisterChatCommand("cpuimpact", "GetCPUImpact")
 
 	self:RegisterChatCommand("cpuusage", "GetTopCPUFunc")

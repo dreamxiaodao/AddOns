@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local DT = E:GetModule('DataTexts')
 
 --Cache global variables
@@ -20,9 +20,6 @@ local COMPLETE = COMPLETE
 local LE_GARRISON_TYPE_6_0 = LE_GARRISON_TYPE_6_0
 local LE_FOLLOWER_TYPE_GARRISON_6_0 = LE_FOLLOWER_TYPE_GARRISON_6_0
 local LE_FOLLOWER_TYPE_SHIPYARD_6_2 = LE_FOLLOWER_TYPE_SHIPYARD_6_2
-
---Global variables that we don't cache, list them here for mikk's FindGlobals script
--- GLOBALS: GarrisonLandingPage
 
 local GARRISON_CURRENCY = 824
 local OIL_CURRENCY = 1101
@@ -117,13 +114,22 @@ local function OnEnter(self, _, noUpdate)
 		end
 	end
 
-	if(hasBuilding == true or numMissions > 0 or numShipMissions > 0) then
+	
+	--Oil
+	local _, numGarrisonResources = GetCurrencyInfo(GARRISON_CURRENCY)
+	local _, numOil = GetCurrencyInfo(OIL_CURRENCY)
+	if (numGarrisonResources > 0) or (numOil > 0) then
+		DT.tooltip:AddLine(" ")
+		DT.tooltip:AddLine(L["Garrison Resources:"])
+		DT.tooltip:AddLine(format("%s %s %s %s", GARRISON_ICON, numGarrisonResources, OIL_ICON, numOil))
+	end
+
+	if (hasBuilding == true or (numMissions > 0) or (numShipMissions > 0) or (numGarrisonResources > 0) or (numOil > 0)) then
 		DT.tooltip:Show()
 	else
 		DT.tooltip:Hide()
 	end
 end
-
 
 local garrisonType = LE_GARRISON_TYPE_6_0;
 

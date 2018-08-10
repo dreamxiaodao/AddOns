@@ -49,7 +49,7 @@ AddOn.callbacks = AddOn.callbacks or
 AddOn.DF = {}; AddOn.DF["profile"] = {}; AddOn.DF["global"] = {}; AddOn.privateVars = {}; AddOn.privateVars["profile"] = {}; -- Defaults
 AddOn.Options = {
 	type = "group",
-	name = AddOnName,
+	name = "EUI",
 	args = {},
 }
 
@@ -61,6 +61,8 @@ Engine[4] = AddOn.DF["profile"];
 Engine[5] = AddOn.DF["global"];
 
 _G[AddOnName] = Engine;
+_G["EUI"] = Engine;
+Engine[1].UIName = "EUI"
 local tcopy = table.copy
 function AddOn:OnInitialize()
 	if not ElvCharacterDB then
@@ -119,7 +121,7 @@ function AddOn:OnInitialize()
 	end
 
 	local GameMenuButton = CreateFrame("Button", nil, GameMenuFrame, "GameMenuButtonTemplate")
-	GameMenuButton:SetText(format("|cfffe7b2c%s|r", AddOnName))
+	GameMenuButton:SetText('|cff1784d1EUI|r')
 	GameMenuButton:SetScript("OnClick", function()
 		AddOn:ToggleConfig()
 		HideUIPanel(GameMenuFrame)
@@ -220,9 +222,9 @@ function AddOn:ToggleConfig(msg)
 				self:Print("|cffff0000Error -- Addon 'ElvUI_Config' not found or is disabled.|r")
 				return
 			end
-			if GetAddOnMetadata("ElvUI_Config", "Version") ~= "1.05" then
-				self:StaticPopup_Show("CLIENT_UPDATE_REQUEST")
-			end
+		--	if GetAddOnMetadata("ElvUI_Config", "Version") ~= "1.05" then
+		--		self:StaticPopup_Show("CLIENT_UPDATE_REQUEST")
+		--	end
 		else
 			self:Print("|cffff0000Error -- Addon 'ElvUI_Config' not found or is disabled.|r")
 			return

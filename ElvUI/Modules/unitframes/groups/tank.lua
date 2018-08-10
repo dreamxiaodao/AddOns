@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local UF = E:GetModule('UnitFrames');
 local _, ns = ...
 local ElvUF = ns.oUF
@@ -37,7 +37,6 @@ function UF:Construct_TankFrames()
 		self.AuraWatch = UF:Construct_AuraWatch(self)
 		self.RaidDebuffs = UF:Construct_RaidDebuffs(self)
 		self.DebuffHighlight = UF:Construct_DebuffHighlight(self)
-
 		self.unitframeType = "tank"
 	else
 		self.unitframeType = "tanktarget"
@@ -47,6 +46,14 @@ function UF:Construct_TankFrames()
 	UF:Update_StatusBars()
 	UF:Update_FontStrings()
 
+	if E.db["clickset"].enable then  
+		self.ClickSet = E.db["clickset"]
+	end
+	
+	tinsert(self.__elements, UF.UpdateClickSet)
+	self:RegisterEvent('UNIT_NAME_UPDATE', UF.UpdateClickSet)
+	self:RegisterEvent('PLAYER_REGEN_ENABLED', UF.UpdateClickSet)
+	self:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED', UF.UpdateClickSet)
 	self.originalParent = self:GetParent()
 
 	return self

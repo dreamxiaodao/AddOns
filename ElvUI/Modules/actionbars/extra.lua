@@ -113,8 +113,8 @@ function AB:SetupExtraButton()
 		ExtraActionBarFrame:Show();
 	end
 
-	E:CreateMover(ExtraActionBarHolder, 'BossButton', L["Boss Button"], nil, nil, nil, 'ALL,ACTIONBARS');
-	E:CreateMover(ZoneAbilityHolder, 'ZoneAbility', L["Zone Ability"], nil, nil, nil, 'ALL,ACTIONBARS');
+	E:CreateMover(ExtraActionBarHolder, 'BossButton', L["Boss Button"], nil, nil, nil, 'ALL,ACTIONBARS', function() return E.private.actionbar.enable; end);
+	E:CreateMover(ZoneAbilityHolder, 'ZoneAbility', L["Zone Ability"], nil, nil, nil, 'ALL,ACTIONBARS', function() return E.private.actionbar.enable; end);
 
 	AB:Extra_SetAlpha()
 	AB:Extra_SetScale()

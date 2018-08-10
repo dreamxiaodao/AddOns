@@ -1,11 +1,10 @@
-local E, L, V, P, G, _ = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB, Localize Underscore
+local E, L, V, P, G, _ = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB, Localize Underscore
 
 --Cache global variables
 --Lua functions
 local _G = _G
+local unpack = unpack
 local format = format
-local ipairs = ipairs
-local tinsert = table.insert
 --WoW API / Variables
 local CreateFrame = CreateFrame
 local IsAddOnLoaded = IsAddOnLoaded
@@ -25,6 +24,7 @@ local FCF_SetLocked = FCF_SetLocked
 local FCF_DockFrame, FCF_UnDockFrame = FCF_DockFrame, FCF_UnDockFrame
 local FCF_OpenNewWindow = FCF_OpenNewWindow
 local FCF_SavePositionAndDimensions = FCF_SavePositionAndDimensions
+local FCF_GetChatWindowInfo = FCF_GetChatWindowInfo
 local FCF_SetWindowName = FCF_SetWindowName
 local FCF_StopDragging = FCF_StopDragging
 local FCF_SetChatWindowFontSize = FCF_SetChatWindowFontSize
@@ -33,32 +33,289 @@ local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
 local LOOT, GENERAL, TRADE = LOOT, GENERAL, TRADE
 local GUILD_EVENT_LOG = GUILD_EVENT_LOG
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
+local CUSTOM_CLASS_COLORS = CUSTOM_CLASS_COLORS
 
 --Global variables that we don't cache, list them here for the mikk's Find Globals script
 -- GLOBALS: ElvUIInstallFrame, InstallStepComplete, InstallStatus, InstallNextButton, InstallPrevButton
 -- GLOBALS: InstallOption1Button, InstallOption2Button, InstallOption3Button, InstallOption4Button
--- GLOBALS: LeftChatToggleButton, RightChatToggleButton, RightChatDataPanel, CreateAnimationGroup
+-- GLOBALS: LeftChatToggleButton, RightChatToggleButton, RightChatDataPanel
 -- GLOBALS: ChatFrame1, ChatFrame2, ChatFrame3, InterfaceOptionsActionBarsPanelPickupActionKeyDropDown
--- GLOBALS: CUSTOM_CLASS_COLORS, MAX_WOW_CHAT_CHANNELS
 
 local CURRENT_PAGE = 0
-local MAX_PAGE = 8
+local MAX_PAGE = 10
 
-local function SetupChat()
+function E:SetupActionbar(value)
+	local AB = E:GetModule('ActionBars')
+	E:CopyTable(E.db.actionbar, P.actionbar);
+	
+	if value == 'Low' then
+		E.db.actionbar['bar2'].enabled = true
+		E.db.actionbar['bar1'].heightMult = 3
+		E.db.actionbar['bar3'].backdrop = false
+		E.db.actionbar['bar3'].buttons = 12
+		E.db.actionbar['bar3'].buttonsPerRow = 12
+		E.db.actionbar['bar5'].buttons = 12
+		E.db.actionbar['bar5'].buttonsPerRow = 1
+		E.db.actionbar['bar5'].backdrop = false
+		E.db.actionbar['bar4'].widthMult = 2
+	elseif value == 'Middle' then
+		E.db.actionbar['bar2'].enabled = true
+		E.db.actionbar['bar5'].buttons = 12
+		E.db.actionbar['bar5'].buttonsPerRow = 4
+		E.db.actionbar['bar3'].buttons = 12
+		E.db.actionbar['bar3'].buttonsPerRow = 4
+		E.db.actionbar['bar4'].buttons = 12
+		E.db.actionbar['bar4'].buttonsPerRow = 12
+		E.db.actionbar['bar1'].heightMult = 3
+		E.db.actionbar['bar4'].backdrop = false	
+	elseif value == 'High' then
+		E.db.actionbar['bar2'].enabled = true
+		E.db.actionbar['bar5'].buttons = 12
+		E.db.actionbar['bar5'].buttonsPerRow = 6
+		E.db.actionbar['bar3'].buttons = 12
+		E.db.actionbar['bar3'].buttonsPerRow = 6
+		E.db.actionbar['bar1'].heightMult = 2
+	end			
+	E.db.actionbar.euiabstyle = value
+	AB:EuiStyle(value);
+	
+	E:GetModule('Layout'):UpdateActionbarInfobar()
+	E:UpdateAll(true)
+
+	if InstallStepComplete then
+		InstallStepComplete.message = L["Eui AB Style"]
+		InstallStepComplete:Show()
+	end
+end
+
+function E:SetupUFStyle(value)
+	if not value then return end
+		
+	local UF = E:GetModule('UnitFrames');
+	E.db.unitframe.unitframeType = value
+	if value == 1 then
+		E.db.unitframe.units.player.portrait.enable = true
+		E.db.unitframe.units.player.portrait.overlay = true
+		E.db.unitframe.units.player.power.width = 'fill'
+		E.db.unitframe.units.player.power.offset = 0
+		E.db.unitframe.units.target.portrait.enable = true
+		E.db.unitframe.units.target.portrait.overlay = true
+		E.db.unitframe.units.target.power.width = 'fill'
+		E.db.unitframe.units.target.power.offset = 0
+		E.db.unitframe.units.party.power.width = 'fill'
+		E.db.unitframe.units.party.power.offset = 0		
+		E.db.unitframe.units.raid.power.width = 'fill'
+		E.db.unitframe.units.raid.power.offset = 0
+	elseif value == 2 then
+		E.db.unitframe.units.player.portrait.enable = true
+		E.db.unitframe.units.player.portrait.overlay = false
+		E.db.unitframe.units.player.portrait.width = 45
+		E.db.unitframe.units.player.power.width = 'fill'
+		E.db.unitframe.units.player.power.offset = 0
+		E.db.unitframe.units.target.portrait.enable = true
+		E.db.unitframe.units.target.portrait.overlay = false
+		E.db.unitframe.units.target.portrait.width = 45
+		E.db.unitframe.units.target.power.width = 'fill'
+		E.db.unitframe.units.target.power.offset = 0
+		E.db.unitframe.units.party.power.width = 'fill'
+		E.db.unitframe.units.party.power.offset = 0		
+		E.db.unitframe.units.raid.power.width = 'fill'
+		E.db.unitframe.units.raid.power.offset = 0
+		E.db.unitframe.units.boss.power.width = 'fill'
+		E.db.unitframe.units.boss.power.offset = 0
+		E.db.unitframe.units.focus.power.width = 'fill'
+		E.db.unitframe.units.focus.power.offset = 0
+		E.db.unitframe.units.targettarget.power.width = 'fill'
+		E.db.unitframe.units.targettarget.power.offset = 0
+	elseif value == 3 then
+		E.db.unitframe.units.player.portrait.enable = false
+		E.db.unitframe.units.player.portrait.overlay = false
+		E.db.unitframe.units.player.portrait.width = 45
+		E.db.unitframe.units.player.power.width = 'fill'
+		E.db.unitframe.units.player.power.offset = 0
+		E.db.unitframe.units.target.portrait.enable = false
+		E.db.unitframe.units.target.portrait.overlay = false
+		E.db.unitframe.units.target.portrait.width = 45
+		E.db.unitframe.units.target.power.width = 'fill'
+		E.db.unitframe.units.target.power.offset = 0
+		E.db.unitframe.units.party.power.width = 'fill'
+		E.db.unitframe.units.party.power.offset = 0		
+		E.db.unitframe.units.raid.power.width = 'fill'
+		E.db.unitframe.units.raid.power.offset = 0
+		E.db.unitframe.units.boss.power.width = 'fill'
+		E.db.unitframe.units.boss.power.offset = 0
+		E.db.unitframe.units.focus.power.width = 'fill'
+		E.db.unitframe.units.focus.power.offset = 0
+		E.db.unitframe.units.targettarget.power.width = 'fill'
+		E.db.unitframe.units.targettarget.power.offset = 0		
+	elseif value == 4 then
+		E.db.unitframe.units.player.portrait.enable = true
+		E.db.unitframe.units.player.portrait.overlay = true
+		E.db.unitframe.units.player.power.width = 'fill'
+		E.db.unitframe.units.player.power.offset = 6
+		E.db.unitframe.units.target.portrait.enable = true
+		E.db.unitframe.units.target.portrait.overlay = true
+		E.db.unitframe.units.target.power.width = 'fill'
+		E.db.unitframe.units.target.power.offset = 6
+		E.db.unitframe.units.party.power.width = 'fill'
+		E.db.unitframe.units.party.power.offset = 6
+		E.db.unitframe.units.raid.power.width = 'fill'
+		E.db.unitframe.units.raid.power.offset = 6
+		E.db.unitframe.units.boss.power.width = 'fill'
+		E.db.unitframe.units.boss.power.offset = 6
+		E.db.unitframe.units.focus.power.width = 'fill'
+		E.db.unitframe.units.focus.power.offset = 6
+		E.db.unitframe.units.targettarget.power.width = 'fill'
+		E.db.unitframe.units.targettarget.power.offset = 6
+	elseif value == 5 then
+		E.db.unitframe.units.player.portrait.enable = true
+		E.db.unitframe.units.player.portrait.overlay = false
+		E.db.unitframe.units.player.portrait.width = 45
+		E.db.unitframe.units.player.power.width = 'fill'
+		E.db.unitframe.units.player.power.offset = 6
+		E.db.unitframe.units.target.portrait.enable = true
+		E.db.unitframe.units.target.portrait.overlay = false
+		E.db.unitframe.units.target.portrait.width = 45
+		E.db.unitframe.units.target.power.width = 'fill'
+		E.db.unitframe.units.target.power.offset = 6
+		E.db.unitframe.units.party.power.width = 'fill'
+		E.db.unitframe.units.party.power.offset = 6
+		E.db.unitframe.units.raid.power.width = 'fill'
+		E.db.unitframe.units.raid.power.offset = 6
+		E.db.unitframe.units.boss.power.width = 'fill'
+		E.db.unitframe.units.boss.power.offset = 6
+		E.db.unitframe.units.focus.power.width = 'fill'
+		E.db.unitframe.units.focus.power.offset = 6
+		E.db.unitframe.units.targettarget.power.width = 'fill'
+		E.db.unitframe.units.targettarget.power.offset = 6
+	elseif value == 6 then
+		E.db.unitframe.units.player.portrait.enable = false
+		E.db.unitframe.units.player.portrait.overlay = false
+		E.db.unitframe.units.player.portrait.width = 45
+		E.db.unitframe.units.player.power.width = 'fill'
+		E.db.unitframe.units.player.power.offset = 6
+		E.db.unitframe.units.target.portrait.enable = false
+		E.db.unitframe.units.target.portrait.overlay = false
+		E.db.unitframe.units.target.portrait.width = 45
+		E.db.unitframe.units.target.power.width = 'fill'
+		E.db.unitframe.units.target.power.offset = 6
+		E.db.unitframe.units.party.power.width = 'fill'
+		E.db.unitframe.units.party.power.offset = 6
+		E.db.unitframe.units.raid.power.width = 'fill'
+		E.db.unitframe.units.raid.power.offset = 6
+		E.db.unitframe.units.boss.power.width = 'fill'
+		E.db.unitframe.units.boss.power.offset = 6
+		E.db.unitframe.units.focus.power.width = 'fill'
+		E.db.unitframe.units.focus.power.offset = 6
+		E.db.unitframe.units.targettarget.power.width = 'fill'
+		E.db.unitframe.units.targettarget.power.offset = 6		
+	elseif value == 7 then
+		E.db.unitframe.units.player.portrait.enable = true
+		E.db.unitframe.units.player.portrait.overlay = true
+		E.db.unitframe.units.player.power.width = 'spaced'
+		E.db.unitframe.units.player.power.offset = 0
+		E.db.unitframe.units.target.portrait.enable = true
+		E.db.unitframe.units.target.portrait.overlay = true
+		E.db.unitframe.units.target.power.width = 'spaced'
+		E.db.unitframe.units.target.power.offset = 0
+		E.db.unitframe.units.party.power.width = 'spaced'
+		E.db.unitframe.units.party.power.offset = 0
+		E.db.unitframe.units.raid.power.width = 'spaced'
+		E.db.unitframe.units.raid.power.offset = 0
+		E.db.unitframe.units.boss.power.width = 'spaced'
+		E.db.unitframe.units.boss.power.offset = 0
+		E.db.unitframe.units.focus.power.width = 'spaced'
+		E.db.unitframe.units.focus.power.offset = 0
+		E.db.unitframe.units.targettarget.power.width = 'spaced'
+		E.db.unitframe.units.targettarget.power.offset = 0
+	elseif value == 8 then
+		E.db.unitframe.units.player.portrait.enable = true
+		E.db.unitframe.units.player.portrait.overlay = false
+		E.db.unitframe.units.player.portrait.width = 45
+		E.db.unitframe.units.player.power.width = 'spaced'
+		E.db.unitframe.units.player.power.offset = 0
+		E.db.unitframe.units.target.portrait.enable = true
+		E.db.unitframe.units.target.portrait.overlay = false
+		E.db.unitframe.units.target.portrait.width = 45
+		E.db.unitframe.units.target.power.width = 'spaced'
+		E.db.unitframe.units.target.power.offset = 0
+		E.db.unitframe.units.party.power.width = 'spaced'
+		E.db.unitframe.units.party.power.offset = 0
+		E.db.unitframe.units.raid.power.width = 'spaced'
+		E.db.unitframe.units.raid.power.offset = 0
+		E.db.unitframe.units.boss.power.width = 'spaced'
+		E.db.unitframe.units.boss.power.offset = 0
+		E.db.unitframe.units.focus.power.width = 'spaced'
+		E.db.unitframe.units.focus.power.offset = 0
+		E.db.unitframe.units.targettarget.power.width = 'spaced'
+		E.db.unitframe.units.targettarget.power.offset = 0		
+	elseif value == 9 then
+		E.db.unitframe.units.player.portrait.enable = false
+		E.db.unitframe.units.player.portrait.overlay = false
+		E.db.unitframe.units.player.portrait.width = 45
+		E.db.unitframe.units.player.power.width = 'spaced'
+		E.db.unitframe.units.player.power.offset = 0	
+		E.db.unitframe.units.target.portrait.enable = false
+		E.db.unitframe.units.target.portrait.overlay = false
+		E.db.unitframe.units.target.portrait.width = 45
+		E.db.unitframe.units.target.power.width = 'spaced'
+		E.db.unitframe.units.target.power.offset = 0
+		E.db.unitframe.units.party.power.width = 'spaced'
+		E.db.unitframe.units.party.power.offset = 0
+		E.db.unitframe.units.raid.power.width = 'spaced'
+		E.db.unitframe.units.raid.power.offset = 0
+		E.db.unitframe.units.boss.power.width = 'spaced'
+		E.db.unitframe.units.boss.power.offset = 0
+		E.db.unitframe.units.focus.power.width = 'spaced'
+		E.db.unitframe.units.focus.power.offset = 0
+		E.db.unitframe.units.targettarget.power.width = 'spaced'
+		E.db.unitframe.units.targettarget.power.offset = 0		
+	end
+	UF:Update_AllFrames()
+	
+	if InstallStepComplete then
+		InstallStepComplete.message = L["Eui UF Style"]
+		InstallStepComplete:Show()	
+	end
+end
+
+local function SetupChat(toggle)
 	InstallStepComplete.message = L["Chat Set"]
 	InstallStepComplete:Show()
-	FCF_ResetChatWindows() -- Monitor this
+	FCF_ResetChatWindows()
 	FCF_SetLocked(ChatFrame1, 1)
 	FCF_DockFrame(ChatFrame2)
 	FCF_SetLocked(ChatFrame2, 1)
 
-	FCF_OpenNewWindow(LOOT)
-	FCF_UnDockFrame(ChatFrame3)
-	FCF_SetLocked(ChatFrame3, 1)
-	ChatFrame3:Show()
+	if toggle then	
+		FCF_OpenNewWindow(LOOT)
+		FCF_OpenNewWindow('PM')
+		FCF_UnDockFrame(ChatFrame3)
+		FCF_SetLocked(ChatFrame3, 1)
+		ChatFrame3:Show()
+		E.db.chat.panelBackdrop = "SHOWBOTH"
+		E.db.datatexts.panels.RightChatDataPanel.left = 'System'
+		E.db.datatexts.panels.RightChatDataPanel.middle = 'Time'
+		E.db.datatexts.panels.RightChatDataPanel.right = 'Gold'
+		E.db.RightChatPanelFaded = false
+		E.db.datatexts.rightChatPanel = true
+	else
+		E.db.chat.panelBackdrop = "LEFT"
+		E.db.datatexts.panels.RightChatDataPanel.left = ''
+		E.db.datatexts.panels.RightChatDataPanel.middle = ''
+		E.db.datatexts.panels.RightChatDataPanel.right = ''
+		E.db.RightChatPanelFaded = true;
+		E.db.datatexts.rightChatPanel = false;
+		HideRightChat()
+	end
+	E:GetModule('DataTexts'):LoadDataTexts();
+	E:GetModule('Chat'):UpdateAnchors()
+	E:GetModule('Layout'):ToggleChatPanels()
 
 	for i = 1, NUM_CHAT_WINDOWS do
 		local frame = _G[format("ChatFrame%s", i)]
+		local chatFrameId = frame:GetID()
+		local chatName = FCF_GetChatWindowInfo(chatFrameId)
 
 		-- move general bottom left
 		if i == 1 then
@@ -73,7 +330,7 @@ local function SetupChat()
 		FCF_StopDragging(frame)
 
 		-- set default Elvui font size
-		FCF_SetChatWindowFontSize(nil, frame, 12)
+		FCF_SetChatWindowFontSize(nil, frame, 14)
 
 		-- rename windows general because moved to chat #3
 		if i == 1 then
@@ -82,40 +339,116 @@ local function SetupChat()
 			FCF_SetWindowName(frame, GUILD_EVENT_LOG)
 		elseif i == 3 then
 			FCF_SetWindowName(frame, LOOT.." / "..TRADE)
+		elseif i == 4 then
+			FCF_SetWindowName(frame, 'PM')
 		end
 	end
 
-	-- keys taken from `ChatTypeGroup` but doesnt add: "OPENING", "TRADESKILLS", "PET_INFO", "COMBAT_MISC_INFO", "COMMUNITIES_CHANNEL", "PET_BATTLE_COMBAT_LOG", "PET_BATTLE_INFO", "TARGETICONS"
-	local chatGroup = { "SYSTEM", "CHANNEL", "SAY", "EMOTE", "YELL", "WHISPER", "PARTY", "PARTY_LEADER", "RAID", "RAID_LEADER", "RAID_WARNING", "INSTANCE_CHAT", "INSTANCE_CHAT_LEADER", "GUILD", "OFFICER", "MONSTER_SAY", "MONSTER_YELL", "MONSTER_EMOTE", "MONSTER_WHISPER", "MONSTER_BOSS_EMOTE", "MONSTER_BOSS_WHISPER", "ERRORS", "AFK", "DND", "IGNORED", "BG_HORDE", "BG_ALLIANCE", "BG_NEUTRAL", "ACHIEVEMENT", "GUILD_ACHIEVEMENT", "BN_WHISPER", "BN_INLINE_TOAST_ALERT" }
 	ChatFrame_RemoveAllMessageGroups(ChatFrame1)
-	for _, v in ipairs(chatGroup) do
-		ChatFrame_AddMessageGroup(ChatFrame1, v)
-	end
+	ChatFrame_AddMessageGroup(ChatFrame1, "SAY")
+	ChatFrame_AddMessageGroup(ChatFrame1, "EMOTE")
+	ChatFrame_AddMessageGroup(ChatFrame1, "YELL")
+	ChatFrame_AddMessageGroup(ChatFrame1, "GUILD")
+	ChatFrame_AddMessageGroup(ChatFrame1, "OFFICER")
+	ChatFrame_AddMessageGroup(ChatFrame1, "GUILD_ACHIEVEMENT")
+	ChatFrame_AddMessageGroup(ChatFrame1, "WHISPER")
+	ChatFrame_AddMessageGroup(ChatFrame1, "MONSTER_SAY")
+	ChatFrame_AddMessageGroup(ChatFrame1, "MONSTER_EMOTE")
+	ChatFrame_AddMessageGroup(ChatFrame1, "MONSTER_YELL")
+	ChatFrame_AddMessageGroup(ChatFrame1, "MONSTER_BOSS_EMOTE")
+	ChatFrame_AddMessageGroup(ChatFrame1, "PARTY")
+	ChatFrame_AddMessageGroup(ChatFrame1, "PARTY_LEADER")
+	ChatFrame_AddMessageGroup(ChatFrame1, "RAID")
+	ChatFrame_AddMessageGroup(ChatFrame1, "RAID_LEADER")
+	ChatFrame_AddMessageGroup(ChatFrame1, "RAID_WARNING")
+	ChatFrame_AddMessageGroup(ChatFrame1, "INSTANCE_CHAT")
+	ChatFrame_AddMessageGroup(ChatFrame1, "INSTANCE_CHAT_LEADER")
+	ChatFrame_AddMessageGroup(ChatFrame1, "BATTLEGROUND")
+	ChatFrame_AddMessageGroup(ChatFrame1, "BATTLEGROUND_LEADER")
+	ChatFrame_AddMessageGroup(ChatFrame1, "BG_HORDE")
+	ChatFrame_AddMessageGroup(ChatFrame1, "BG_ALLIANCE")
+	ChatFrame_AddMessageGroup(ChatFrame1, "BG_NEUTRAL")
+	ChatFrame_AddMessageGroup(ChatFrame1, "SYSTEM")
+	ChatFrame_AddMessageGroup(ChatFrame1, "ERRORS")
+	ChatFrame_AddMessageGroup(ChatFrame1, "AFK")
+	ChatFrame_AddMessageGroup(ChatFrame1, "DND")
+	ChatFrame_AddMessageGroup(ChatFrame1, "IGNORED")
+	ChatFrame_AddMessageGroup(ChatFrame1, "ACHIEVEMENT")
+	ChatFrame_AddMessageGroup(ChatFrame1, "BN_WHISPER")
+	ChatFrame_AddMessageGroup(ChatFrame1, "BN_CONVERSATION")
+	ChatFrame_AddMessageGroup(ChatFrame1, "BN_INLINE_TOAST_ALERT")
 
-	-- keys taken from `ChatTypeGroup` which weren't added above to ChatFrame1
-	chatGroup = { "COMBAT_XP_GAIN", "COMBAT_HONOR_GAIN", "COMBAT_FACTION_CHANGE", "SKILL", "LOOT", "CURRENCY", "MONEY" }
-	ChatFrame_RemoveAllMessageGroups(ChatFrame3)
-	for _, v in ipairs(chatGroup) do
-		ChatFrame_AddMessageGroup(ChatFrame3, v)
+	if toggle then
+		ChatFrame_RemoveAllMessageGroups(ChatFrame3)
+		ChatFrame_AddMessageGroup(ChatFrame3, "COMBAT_FACTION_CHANGE")
+		ChatFrame_AddMessageGroup(ChatFrame3, "SKILL")
+		ChatFrame_AddMessageGroup(ChatFrame3, "LOOT")
+		ChatFrame_AddMessageGroup(ChatFrame3, "MONEY")
+		ChatFrame_AddMessageGroup(ChatFrame3, "COMBAT_XP_GAIN")
+		ChatFrame_AddMessageGroup(ChatFrame3, "COMBAT_HONOR_GAIN")
+		ChatFrame_AddMessageGroup(ChatFrame3, "COMBAT_GUILD_XP_GAIN")
+		ChatFrame_AddMessageGroup(ChatFrame3, "CURRENCY")
+	else
+		ChatFrame_AddMessageGroup(ChatFrame1, "COMBAT_FACTION_CHANGE")
+		ChatFrame_AddMessageGroup(ChatFrame1, "SKILL")
+		ChatFrame_AddMessageGroup(ChatFrame1, "LOOT")
+		ChatFrame_AddMessageGroup(ChatFrame1, "MONEY")
+		ChatFrame_AddMessageGroup(ChatFrame1, "COMBAT_XP_GAIN")
+		ChatFrame_AddMessageGroup(ChatFrame1, "COMBAT_HONOR_GAIN")
+		ChatFrame_AddMessageGroup(ChatFrame1, "COMBAT_GUILD_XP_GAIN")
+		ChatFrame_AddMessageGroup(ChatFrame1, "CURRENCY")
 	end
+	ChatFrame_RemoveAllMessageGroups(ChatFrame4)	
+	ChatFrame_AddMessageGroup(ChatFrame4, "BN_WHISPER")
+	ChatFrame_AddMessageGroup(ChatFrame4, "WHISPER")
 
 	ChatFrame_AddChannel(ChatFrame1, GENERAL)
-	ChatFrame_RemoveChannel(ChatFrame1, TRADE)
-	ChatFrame_AddChannel(ChatFrame3, TRADE)
-
-	-- set the chat groups names in class color to enabled for all chat groups which players names appear
-	chatGroup = { "SAY", "EMOTE", "YELL", "WHISPER", "PARTY", "PARTY_LEADER", "RAID", "RAID_LEADER", "RAID_WARNING", "INSTANCE_CHAT", "INSTANCE_CHAT_LEADER", "GUILD", "OFFICER", "ACHIEVEMENT", "GUILD_ACHIEVEMENT", "COMMUNITIES_CHANNEL" }
-	for i = 1, MAX_WOW_CHAT_CHANNELS do
-		tinsert(chatGroup, "CHANNEL"..i)
-	end
-	for _, v in ipairs(chatGroup) do
-		ToggleChatColorNamesByClassGroup(true, v)
+	if toggle then
+		ChatFrame_RemoveChannel(ChatFrame1, L['Trade'])
+		ChatFrame_AddChannel(ChatFrame3, L['Trade'])
 	end
 
-	-- Adjust Chat Colors
-	ChangeChatColor("CHANNEL1", 195/255, 230/255, 232/255) -- General
-	ChangeChatColor("CHANNEL2", 232/255, 158/255, 121/255) -- Trade
-	ChangeChatColor("CHANNEL3", 232/255, 228/255, 121/255) -- Local Defense
+	if E.myname == "Elvz" then
+		SetCVar("scriptErrors", 1)
+	end
+
+	-- enable classcolor automatically on login and on each character without doing /configure each time.
+	ToggleChatColorNamesByClassGroup(true, "SAY")
+	ToggleChatColorNamesByClassGroup(true, "EMOTE")
+	ToggleChatColorNamesByClassGroup(true, "YELL")
+	ToggleChatColorNamesByClassGroup(true, "GUILD")
+	ToggleChatColorNamesByClassGroup(true, "OFFICER")
+	ToggleChatColorNamesByClassGroup(true, "GUILD_ACHIEVEMENT")
+	ToggleChatColorNamesByClassGroup(true, "ACHIEVEMENT")
+	ToggleChatColorNamesByClassGroup(true, "WHISPER")
+	ToggleChatColorNamesByClassGroup(true, "PARTY")
+	ToggleChatColorNamesByClassGroup(true, "PARTY_LEADER")
+	ToggleChatColorNamesByClassGroup(true, "RAID")
+	ToggleChatColorNamesByClassGroup(true, "RAID_LEADER")
+	ToggleChatColorNamesByClassGroup(true, "RAID_WARNING")
+	ToggleChatColorNamesByClassGroup(true, "BATTLEGROUND")
+	ToggleChatColorNamesByClassGroup(true, "BATTLEGROUND_LEADER")
+	ToggleChatColorNamesByClassGroup(true, "INSTANCE_CHAT")
+	ToggleChatColorNamesByClassGroup(true, "INSTANCE_CHAT_LEADER")
+	ToggleChatColorNamesByClassGroup(true, "CHANNEL1")
+	ToggleChatColorNamesByClassGroup(true, "CHANNEL2")
+	ToggleChatColorNamesByClassGroup(true, "CHANNEL3")
+	ToggleChatColorNamesByClassGroup(true, "CHANNEL4")
+	ToggleChatColorNamesByClassGroup(true, "CHANNEL5")
+	ToggleChatColorNamesByClassGroup(true, "CHANNEL6")
+	ToggleChatColorNamesByClassGroup(true, "CHANNEL7")
+	ToggleChatColorNamesByClassGroup(true, "CHANNEL8")
+	ToggleChatColorNamesByClassGroup(true, "CHANNEL9")
+	ToggleChatColorNamesByClassGroup(true, "CHANNEL10")
+	ToggleChatColorNamesByClassGroup(true, "CHANNEL11")
+
+	--Adjust Chat Colors
+	--General
+	ChangeChatColor("CHANNEL1", 195/255, 230/255, 232/255)
+	--Trade
+	ChangeChatColor("CHANNEL2", 232/255, 158/255, 121/255)
+	--Local Defense
+	ChangeChatColor("CHANNEL3", 232/255, 228/255, 121/255)
 
 	if E.Chat then
 		E.Chat:PositionChat(true)
@@ -127,10 +460,7 @@ local function SetupChat()
 			LeftChatToggleButton:Click()
 		end
 	end
-
-	if E.myname == "Elvz" then
-		SetCVar("scriptErrors", 1)
-	end
+	ChatFrame1Tab:Click()
 end
 
 local function SetupCVars()
@@ -147,6 +477,7 @@ local function SetupCVars()
 	SetCVar('lockActionBars', 1)
 	SetCVar('SpamFilter', 0)
 	SetCVar("nameplateShowSelf", 0)
+	SetCVar('UnitNameNPC', 1)
 	SetCVar("cameraDistanceMaxZoomFactor", 2.6)
 	SetCVar("nameplateShowFriendlyNPCs", 1)
 
@@ -167,28 +498,27 @@ function E:SetupTheme(theme, noDisplayMsg)
 
 	--Set colors
 	if theme == "classic" then
-		E.db.general.bordercolor = (E.PixelMode and E:GetColor(0, 0, 0) or E:GetColor(.31, .31, .31))
+		E.db.general.bordercolor = E:GetColor(.31, .31, .31)
 		E.db.general.backdropcolor = E:GetColor(.1, .1, .1)
 		E.db.general.backdropfadecolor = E:GetColor(.06, .06, .06, .8)
-		E.db.unitframe.colors.borderColor = (E.PixelMode and E:GetColor(0, 0, 0) or E:GetColor(.31, .31, .31))
+
 		E.db.unitframe.colors.healthclass = false
 		E.db.unitframe.colors.health = E:GetColor(.31, .31, .31)
 		E.db.unitframe.colors.auraBarBuff = E:GetColor(.31, .31, .31)
 		E.db.unitframe.colors.castColor = E:GetColor(.31, .31, .31)
 		E.db.unitframe.colors.castClassColor = false
 	elseif theme == "class" then
-		E.db.general.bordercolor = (E.PixelMode and E:GetColor(0, 0, 0) or E:GetColor(.31, .31, .31))
+		E.db.general.bordercolor = E:GetColor(classColor.r, classColor.b, classColor.g)
 		E.db.general.backdropcolor = E:GetColor(.1, .1, .1)
 		E.db.general.backdropfadecolor = E:GetColor(.06, .06, .06, .8)
-		E.db.unitframe.colors.borderColor = (E.PixelMode and E:GetColor(0, 0, 0) or E:GetColor(.31, .31, .31))
 		E.db.unitframe.colors.auraBarBuff = E:GetColor(classColor.r, classColor.b, classColor.g)
 		E.db.unitframe.colors.healthclass = true
+		E.db.unitframe.colors.castColor = E:GetColor(classColor.r, classColor.b, classColor.g)
 		E.db.unitframe.colors.castClassColor = true
-	else
-		E.db.general.bordercolor = (E.PixelMode and E:GetColor(0, 0, 0) or E:GetColor(.1, .1, .1))
+	elseif theme == "default" then
+		E.db.general.bordercolor = E:GetColor(.1, .1, .1)
 		E.db.general.backdropcolor = E:GetColor(.1, .1, .1)
 		E.db.general.backdropfadecolor = E:GetColor(.054, .054, .054, .8)
-		E.db.unitframe.colors.borderColor = (E.PixelMode and E:GetColor(0, 0, 0) or E:GetColor(.1, .1, .1))
 		E.db.unitframe.colors.auraBarBuff = E:GetColor(.1, .1, .1)
 		E.db.unitframe.colors.healthclass = false
 		E.db.unitframe.colors.health = E:GetColor(.1, .1, .1)
@@ -196,6 +526,19 @@ function E:SetupTheme(theme, noDisplayMsg)
 		E.db.unitframe.colors.castClassColor = false
 	end
 
+	if theme == "transparent" then
+		E.db.general.transparent = true
+		
+		E.db.unitframe.transparent = true
+		E.db.general.backdropfadecolor.a = 0.2
+		E:StaticPopup_Show('Transparent_Theme_Style')
+	else
+		E.db.general.transparent = false
+		E.db.unitframe.transparent = false
+		E.db.general.backdropfadecolor.a = 0.9
+		E.db.general.ShadowEnable = false
+	end
+	
 	--Value Color
 	if theme == "class" then
 		E.db.general.valuecolor = E:GetColor(classColor.r, classColor.b, classColor.g)
@@ -215,6 +558,99 @@ function E:SetupTheme(theme, noDisplayMsg)
 	end
 end
 
+function E:SetupEuiLayout(layout, noDataReset)
+	--Unitframes
+	if not noDataReset then
+		E:CopyTable(E.db.unitframe.units, P.unitframe.units)
+	end
+	
+	if not noDataReset then
+		E:ResetMovers('Player Frame')
+		E:ResetMovers('Target Frame')
+		E:ResetMovers('TargetTarget Frame')
+		E:ResetMovers('Focus Frame')
+		E:ResetMovers('FocusTarget Frame')
+		E:ResetMovers('Pet Frame')
+		E:ResetMovers('Party Frame')
+		E:ResetMovers('Raid Frames')
+		if not E.db.movers then E.db.movers = {} end
+	end
+
+	if layout == 'CENTER' then
+		if not noDataReset then
+			--改变设置值
+			E.db.unitframe.units.party.growthDirection = "LEFT_UP"
+			E.db.unitframe.units.party.startOutFromCenter = true
+			E.db.unitframe.units.party.horizontalSpacing = 3
+			E.db.unitframe.units.party.verticalSpacing = 0
+			E.db.unitframe.units.party.healPrediction = true
+			E.db.unitframe.units.party.width = 80
+			E.db.unitframe.units.party.height = 44
+			E.db.unitframe.units.party.debuffs.anchorPoint = 'BOTTOMLEFT'
+			E.db.unitframe.units.party.castbar.enable = false
+			E.db.unitframe.units.party.debuffs.anchorPoint = 'BOTTOM'
+			E.db.unitframe.units.party.debuffs.perrow = 4
+			E.db.unitframe.units.party.debuffs.sizeOverride = 0
+			
+			E.db.unitframe.units['raid'].growthDirection = 'LEFT_UP'
+			E.db.unitframe.units['raid'].startOutFromCenter = true
+			E.db.unitframe.units['raid'].healPrediction = true
+		end
+		
+		--pos
+		E.db.movers.ElvUF_PartyMover = "BOTTOM,ElvUIParent,BOTTOM,0,118"
+		E.db.movers.ElvUF_RaidMover = "BOTTOM,ElvUIParent,BOTTOM,0,118"
+		
+		E.db.movers.ElvUF_TargetMover = "BOTTOMLEFT,ElvUIParent,BOTTOM,210,195"
+		E.db.movers.ElvUF_PlayerMover = "BOTTOMRIGHT,ElvUIParent,BOTTOM,-210,195"
+		E.db.movers.ElvUF_PetMover = "BOTTOMRIGHT,ElvUIParent,BOTTOM,-210,125"
+		E.db.movers.ElvUF_TargetTargetMover = "BOTTOMLEFT,ElvUIParent,BOTTOM,210,125"
+		E.db.movers.ElvUF_FocusMover = "BOTTOM,ElvUIParent,BOTTOM,310,432"
+
+	elseif layout == 'RIGHT' then
+		if not noDataReset then
+			E.db.unitframe.units['raid'].growthDirection = 'RIGHT_UP'
+			E.db.unitframe.units['raid40'].growthDirection = 'RIGHT_UP'
+		end
+		
+		E.db.movers.ElvUF_RaidMover = "BOTTOMRIGHT,ElvUIParent,BOTTOMRIGHT,-4,195"
+		
+	elseif layout == 'SINGLE' then
+		if not noDataReset then
+			E.db.unitframe.units['raid'].numGroups = 6
+			E.db.unitframe.units['raid'].width = 100
+			E.db.unitframe.units['raid'].height = 28
+			E.db.unitframe.units['raid'].growthDirection = 'UP_RIGHT'
+			E.db.unitframe.units['raid'].groupsPerRowCol = 6
+			E.db.unitframe.units['raid'].power.width = 'spaced'
+			E.db.unitframe.units['raid'].power.position = 'RIGHT'
+			E.db.unitframe.units['raid'].health.position = 'LEFT'
+			E.db.unitframe.units['raid'].name.text_format = 'LEFT'
+			E.db.unitframe.units['raid'].rdebuffs.enable = false
+			E.db.unitframe.units['raid'].debuffs.enable = true
+			E.db.unitframe.units['raid'].debuffs.anchorPoint = 'RIGHT'
+		--	E.db.unitframe.units['raid40'].horizontalSpacing = 36
+		--	E.db.unitframe.units['raid40'].verticalSpacing = 4
+		end
+		
+		E.db.movers.ElvUF_RaidMover = "BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,195"
+	--	E.db.movers.ElvUF_Raid40Mover = "BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,195"
+	end
+	
+	if layout ~= 'CENTER' then
+		if E.db.lowresolutionset then
+			E.db.movers.ElvUF_PlayerMover = "BOTTOM,ElvUIParent,BOTTOM,-118,142"
+			E.db.movers.ElvUF_TargetMover = "BOTTOM,ElvUIParent,BOTTOM,118,142"
+			E.db.movers.ElvUF_TargetTargetMover = "BOTTOM,ElvUIParent,BOTTOM,118,84"
+			E.db.movers.ElvUF_PetMover = "BOTTOM,ElvUIParent,BOTTOM,-118,84"
+			E.db.movers.ElvUF_FocusMover = "BOTTOM,ElvUIParent,BOTTOM,310,332"	
+		end
+	end		
+
+	InstallStepComplete.message = L['Raid Layout']
+	InstallStepComplete:Show()
+end
+
 function E:SetupResolution(noDataReset)
 	if not noDataReset then
 		E:ResetMovers('')
@@ -228,19 +664,16 @@ function E:SetupResolution(noDataReset)
 			E.db.chat.panelWidthRight = 400
 			E.db.chat.panelHeightRight = 180
 
-			E.db.bags.bagWidth = 394
-			E.db.bags.bankWidth = 394
-
 			E:CopyTable(E.db.actionbar, P.actionbar)
 
-			E.db.actionbar.bar1.heightMult = 2
-			E.db.actionbar.bar2.enabled = true
-			E.db.actionbar.bar3.enabled = false
-			E.db.actionbar.bar5.enabled = false
+			E.db.actionbar.bar1.heightMult = 2;
+			E.db.actionbar.bar2.enabled = true;
+			E.db.actionbar.bar3.enabled = false;
+			E.db.actionbar.bar5.enabled = false;
 		end
 
 		if not noDataReset then
-			E.db.auras.wrapAfter = 10
+			E.db.auras.wrapAfter = 10;
 		end
 
 		E.db.movers.ElvAB_2 = "CENTER,ElvUIParent,BOTTOM,0,56.18"
@@ -250,34 +683,34 @@ function E:SetupResolution(noDataReset)
 
 			E.db.unitframe.fontSize = 10
 
-			E.db.unitframe.units.player.width = 200
-			E.db.unitframe.units.player.castbar.width = 200
-			E.db.unitframe.units.player.classbar.fill = 'fill'
+			E.db.unitframe.units.player.width = 200;
+			E.db.unitframe.units.player.castbar.width = 200;
+			E.db.unitframe.units.player.classbar.fill = 'fill';
 			E.db.unitframe.units.player.health.text_format = "[healthcolor][health:current]"
 
-			E.db.unitframe.units.target.width = 200
-			E.db.unitframe.units.target.castbar.width = 200
+			E.db.unitframe.units.target.width = 200;
+			E.db.unitframe.units.target.castbar.width = 200;
 			E.db.unitframe.units.target.health.text_format = '[healthcolor][health:current]'
 
-			E.db.unitframe.units.pet.power.enable = false
-			E.db.unitframe.units.pet.width = 200
-			E.db.unitframe.units.pet.height = 26
+			E.db.unitframe.units.pet.power.enable = false;
+			E.db.unitframe.units.pet.width = 200;
+			E.db.unitframe.units.pet.height = 26;
 
-			E.db.unitframe.units.targettarget.debuffs.enable = false
-			E.db.unitframe.units.targettarget.power.enable = false
-			E.db.unitframe.units.targettarget.width = 200
-			E.db.unitframe.units.targettarget.height = 26
+			E.db.unitframe.units.targettarget.debuffs.enable = false;
+			E.db.unitframe.units.targettarget.power.enable = false;
+			E.db.unitframe.units.targettarget.width = 200;
+			E.db.unitframe.units.targettarget.height = 26;
 
-			E.db.unitframe.units.boss.width = 200
-			E.db.unitframe.units.boss.castbar.width = 200
-			E.db.unitframe.units.arena.width = 200
-			E.db.unitframe.units.arena.castbar.width = 200
+			E.db.unitframe.units.boss.width = 200;
+			E.db.unitframe.units.boss.castbar.width = 200;
+			E.db.unitframe.units.arena.width = 200;
+			E.db.unitframe.units.arena.castbar.width = 200;
 		end
 
 		local isPixel = E.private.general.pixelPerfect
-		local xOffset = isPixel and 103 or 106
-		local yOffset = isPixel and 125 or 135
-		local yOffsetSmall = isPixel and 76 or 80
+		local xOffset = isPixel and 103 or 106;
+		local yOffset = isPixel and 125 or 135;
+		local yOffsetSmall = isPixel and 76 or 80;
 
 		E.db.movers.ElvUF_PlayerMover = "BOTTOM,ElvUIParent,BOTTOM,"..-xOffset..","..yOffset
 		E.db.movers.ElvUF_TargetTargetMover = "BOTTOM,ElvUIParent,BOTTOM,"..xOffset..","..yOffsetSmall
@@ -285,19 +718,16 @@ function E:SetupResolution(noDataReset)
 		E.db.movers.ElvUF_PetMover = "BOTTOM,ElvUIParent,BOTTOM,"..-xOffset..","..yOffsetSmall
 		E.db.movers.ElvUF_FocusMover = "BOTTOM,ElvUIParent,BOTTOM,310,332"
 
-		E.db.lowresolutionset = true
+		E.db.lowresolutionset = true;
 	elseif not noDataReset then
 		E.db.chat.panelWidth = P.chat.panelWidth
 		E.db.chat.panelHeight = P.chat.panelHeight
 
-		E.db.bags.bagWidth = P.bags.bagWidth
-		E.db.bags.bankWidth = P.bags.bankWidth
-
 		E:CopyTable(E.db.actionbar, P.actionbar)
 		E:CopyTable(E.db.unitframe.units, P.unitframe.units)
-		E.db.auras.wrapAfter = P.auras.wrapAfter
+		E.db.auras.wrapAfter = P.auras.wrapAfter;
 
-		E.db.lowresolutionset = nil
+		E.db.lowresolutionset = nil;
 	end
 
 	if not noDataReset and E.private.theme then
@@ -341,37 +771,45 @@ function E:SetupLayout(layout, noDataReset)
 		end
 
 		if not noDataReset then
-			E.db.unitframe.units.raid.horizontalSpacing = 9
-			E.db.unitframe.units.raid.rdebuffs.enable = false
-			E.db.unitframe.units.raid.verticalSpacing = 9
-			E.db.unitframe.units.raid.debuffs.sizeOverride = 16
+			E.db.unitframe.units.raid.horizontalSpacing = 9;
+			E.db.unitframe.units.raid.rdebuffs.enable = false;
+			E.db.unitframe.units.raid.verticalSpacing = 9;
+			E.db.unitframe.units.raid.debuffs.sizeOverride = 16;
 			E.db.unitframe.units.raid.debuffs.enable = true
-			E.db.unitframe.units.raid.debuffs.anchorPoint = "TOPRIGHT"
-			E.db.unitframe.units.raid.debuffs.xOffset = -4
-			E.db.unitframe.units.raid.debuffs.yOffset = -7
-			E.db.unitframe.units.raid.height = 45
-			E.db.unitframe.units.raid.buffs.xOffset = 50
-			E.db.unitframe.units.raid.buffs.yOffset = -6
+			E.db.unitframe.units.raid.debuffs.anchorPoint = "TOPRIGHT";
+			E.db.unitframe.units.raid.debuffs.xOffset = -4;
+			E.db.unitframe.units.raid.debuffs.yOffset = -7;
+			E.db.unitframe.units.raid.height = 45;
+			E.db.unitframe.units.raid.buffs.xOffset = 50;
+			E.db.unitframe.units.raid.buffs.yOffset = -6;
 			E.db.unitframe.units.raid.buffs.clickThrough = true
+			E.db.unitframe.units.raid.buffs.noDuration = false
+			E.db.unitframe.units.raid.buffs.playerOnly = false;
 			E.db.unitframe.units.raid.buffs.perrow = 1
+			E.db.unitframe.units.raid.buffs.useFilter = "TurtleBuffs"
 			E.db.unitframe.units.raid.buffs.sizeOverride = 22
+			E.db.unitframe.units.raid.buffs.useBlacklist = false
 			E.db.unitframe.units.raid.buffs.enable = true
 			E.db.unitframe.units.raid.growthDirection = "LEFT_UP"
 
 			E.db.unitframe.units.party.growthDirection = "LEFT_UP"
-			E.db.unitframe.units.party.horizontalSpacing = 9
-			E.db.unitframe.units.party.verticalSpacing = 9
-			E.db.unitframe.units.party.debuffs.sizeOverride = 16
+			E.db.unitframe.units.party.horizontalSpacing = 9;
+			E.db.unitframe.units.party.verticalSpacing = 9;
+			E.db.unitframe.units.party.debuffs.sizeOverride = 16;
 			E.db.unitframe.units.party.debuffs.enable = true
-			E.db.unitframe.units.party.debuffs.anchorPoint = "TOPRIGHT"
-			E.db.unitframe.units.party.debuffs.xOffset = -4
-			E.db.unitframe.units.party.debuffs.yOffset = -7
-			E.db.unitframe.units.party.height = 45
-			E.db.unitframe.units.party.buffs.xOffset = 50
-			E.db.unitframe.units.party.buffs.yOffset = -6
+			E.db.unitframe.units.party.debuffs.anchorPoint = "TOPRIGHT";
+			E.db.unitframe.units.party.debuffs.xOffset = -4;
+			E.db.unitframe.units.party.debuffs.yOffset = -7;
+			E.db.unitframe.units.party.height = 45;
+			E.db.unitframe.units.party.buffs.xOffset = 50;
+			E.db.unitframe.units.party.buffs.yOffset = -6;
 			E.db.unitframe.units.party.buffs.clickThrough = true
+			E.db.unitframe.units.party.buffs.noDuration = false
+			E.db.unitframe.units.party.buffs.playerOnly = false;
 			E.db.unitframe.units.party.buffs.perrow = 1
+			E.db.unitframe.units.party.buffs.useFilter = "TurtleBuffs"
 			E.db.unitframe.units.party.buffs.sizeOverride = 22
+			E.db.unitframe.units.party.buffs.useBlacklist = false
 			E.db.unitframe.units.party.buffs.enable = true
 			E.db.unitframe.units.party.roleIcon.position = "BOTTOMRIGHT"
 			E.db.unitframe.units.party.health.text_format = "[healthcolor][health:deficit]"
@@ -390,8 +828,8 @@ function E:SetupLayout(layout, noDataReset)
 			E.db.unitframe.units.raid.health.frequentUpdates = true
 			E.db.unitframe.units.raid40.health.frequentUpdates = true
 
-			E.db.unitframe.units.party.healPrediction = true
-			E.db.unitframe.units.raid.healPrediction = true
+			E.db.unitframe.units.party.healPrediction = true;
+			E.db.unitframe.units.raid.healPrediction = true;
 			E.db.unitframe.units.raid40.healPrediction = true
 			E.db.unitframe.units.player.castbar.insideInfoPanel = false
 			E.db.actionbar.bar2.enabled = true
@@ -478,28 +916,28 @@ function E:SetupLayout(layout, noDataReset)
 	end
 
 	if E.db.lowresolutionset and not noDataReset then
-		E.db.unitframe.units.player.width = 200
+		E.db.unitframe.units.player.width = 200;
 		if layout ~= 'healer' then
-			E.db.unitframe.units.player.castbar.width = 200
+			E.db.unitframe.units.player.castbar.width = 200;
 		end
-		E.db.unitframe.units.player.classbar.fill = 'fill'
+		E.db.unitframe.units.player.classbar.fill = 'fill';
 
-		E.db.unitframe.units.target.width = 200
-		E.db.unitframe.units.target.castbar.width = 200
+		E.db.unitframe.units.target.width = 200;
+		E.db.unitframe.units.target.castbar.width = 200;
 
-		E.db.unitframe.units.pet.power.enable = false
-		E.db.unitframe.units.pet.width = 200
-		E.db.unitframe.units.pet.height = 26
+		E.db.unitframe.units.pet.power.enable = false;
+		E.db.unitframe.units.pet.width = 200;
+		E.db.unitframe.units.pet.height = 26;
 
-		E.db.unitframe.units.targettarget.debuffs.enable = false
-		E.db.unitframe.units.targettarget.power.enable = false
-		E.db.unitframe.units.targettarget.width = 200
-		E.db.unitframe.units.targettarget.height = 26
+		E.db.unitframe.units.targettarget.debuffs.enable = false;
+		E.db.unitframe.units.targettarget.power.enable = false;
+		E.db.unitframe.units.targettarget.width = 200;
+		E.db.unitframe.units.targettarget.height = 26;
 
-		E.db.unitframe.units.boss.width = 200
-		E.db.unitframe.units.boss.castbar.width = 200
-		E.db.unitframe.units.arena.width = 200
-		E.db.unitframe.units.arena.castbar.width = 200
+		E.db.unitframe.units.boss.width = 200;
+		E.db.unitframe.units.boss.castbar.width = 200;
+		E.db.unitframe.units.arena.width = 200;
+		E.db.unitframe.units.arena.castbar.width = 200;
 	end
 
 	if(layout == 'dpsCaster' or layout == 'healer' or (layout == 'dpsMelee' and E.myclass == 'HUNTER')) then
@@ -545,7 +983,7 @@ function E:SetupLayout(layout, noDataReset)
 
 			E.db.movers["BossButton"] = "TOP,ElvUIParent,TOP,0,-138"
 		end
-
+		
 		if E.PixelMode then
 			E.db.movers.ElvUF_PlayerCastbarMover = "BOTTOM,ElvUIParent,BOTTOM,0,"..yOffset
 		else
@@ -589,8 +1027,8 @@ local function SetupAuras(style)
 		UF:Configure_Auras(frame, "Debuffs")
 		UF:Configure_AuraBars(frame)
 	end
-
-	frame = UF["target"]
+	
+	local frame = UF["target"]
 	E:CopyTable(E.db.unitframe.units.target.buffs, P.unitframe.units.target.buffs)
 	E:CopyTable(E.db.unitframe.units.target.debuffs, P.unitframe.units.target.debuffs)
 	E:CopyTable(E.db.unitframe.units.target.aurabar, P.unitframe.units.target.aurabar)
@@ -600,7 +1038,7 @@ local function SetupAuras(style)
 		UF:Configure_AuraBars(frame)
 	end
 
-	frame = UF["focus"]
+	local frame = UF["focus"]
 	E:CopyTable(E.db.unitframe.units.focus.buffs, P.unitframe.units.focus.buffs)
 	E:CopyTable(E.db.unitframe.units.focus.debuffs, P.unitframe.units.focus.debuffs)
 	E:CopyTable(E.db.unitframe.units.focus.aurabar, P.unitframe.units.focus.aurabar)
@@ -612,20 +1050,17 @@ local function SetupAuras(style)
 
 	if not style then
 		--PLAYER
-		E.db.unitframe.units.player.buffs.enable = true
-		E.db.unitframe.units.player.buffs.attachTo = 'FRAME'
-		E.db.unitframe.units.player.debuffs.attachTo = 'BUFFS'
-		E.db.unitframe.units.player.aurabar.enable = false
-		if E.private.unitframe.enable then
-			E:GetModule('UnitFrames'):CreateAndUpdateUF("player")
-		end
+		E.db.unitframe.units.player.buffs.enable = true;
+		E.db.unitframe.units.player.buffs.attachTo = 'FRAME';
+		E.db.unitframe.units.player.buffs.noDuration = false;
+		E.db.unitframe.units.player.debuffs.attachTo = 'BUFFS';
+		E.db.unitframe.units.player.aurabar.enable = false;
+		E:GetModule('UnitFrames'):CreateAndUpdateUF("player")
 
 		--TARGET
-		E.db.unitframe.units.target.debuffs.enable = true
-		E.db.unitframe.units.target.aurabar.enable = false
-		if E.private.unitframe.enable then
-			E:GetModule('UnitFrames'):CreateAndUpdateUF("target")
-		end
+		E.db.unitframe.units.target.debuffs.enable = true;
+		E.db.unitframe.units.target.aurabar.enable = false;
+		E:GetModule('UnitFrames'):CreateAndUpdateUF("target")
 	end
 
 	if InstallStepComplete then
@@ -660,6 +1095,14 @@ local function ResetAll()
 	ElvUIInstallFrame.Desc2:SetText("")
 	ElvUIInstallFrame.Desc3:SetText("")
 	ElvUIInstallFrame:Size(550, 400)
+
+	for i = 1, 9 do
+		_G["InstallOptionUFStyle".. i]:Hide()
+		_G["InstallOptionUFStyle".. i]:SetScript('OnClick', nil)
+	end	
+	InstallTutorialImage:Size(250)
+	InstallTutorialImage:SetTexture(nil)
+	InstallTutorialImage:Hide()	
 end
 
 local function SetPage(PageNum)
@@ -687,13 +1130,16 @@ local function SetPage(PageNum)
 
 	if PageNum == 1 then
 		f.SubTitle:SetFormattedText(L["Welcome to ElvUI version %s!"], E.version)
-		f.Desc1:SetText(L["This install process will help you learn some of the features in ElvUI has to offer and also prepare your user interface for usage."])
-		f.Desc2:SetText(L["The in-game configuration menu can be accessed by typing the /ec command or by clicking the 'C' button on the minimap. Press the button below if you wish to skip the installation process."])
+		f.Desc1:SetText(L["This install process will help you learn some of the features in ElvUI has to offer and also prepare your user interface for usage."]:gsub("ElvUI", E.UIName))
+		f.Desc2:SetText(L["The in-game configuration menu can be accesses by typing the /ec command or by clicking the 'C' button on the minimap. Press the button below if you wish to skip the installation process."])
 		f.Desc3:SetText(L["Please press the continue button to go onto the next step."])
 
 		InstallOption1Button:Show()
 		InstallOption1Button:SetScript("OnClick", InstallComplete)
 		InstallOption1Button:SetText(L["Skip Process"])
+		InstallTutorialImage:Size(256, 128)
+		InstallTutorialImage:SetTexture('Interface\\AddOns\\ElvUI\\media\\textures\\eui_logo.tga')
+		InstallTutorialImage:Show()
 	elseif PageNum == 2 then
 		f.SubTitle:SetText(L["CVars"])
 		f.Desc1:SetText(L["This part of the installation process sets up your World of Warcraft default options it is recommended you should do this step for everything to behave properly."])
@@ -708,12 +1154,15 @@ local function SetPage(PageNum)
 		f.Desc2:SetText(L["The chat windows function the same as Blizzard standard chat windows, you can right click the tabs and drag them around, rename, etc. Please click the button below to setup your chat windows."])
 		f.Desc3:SetText(L["Importance: |cffD3CF00Medium|r"])
 		InstallOption1Button:Show()
-		InstallOption1Button:SetScript("OnClick", SetupChat)
-		InstallOption1Button:SetText(L["Setup Chat"])
+		InstallOption1Button:SetScript("OnClick", function() SetupChat(true) end)
+		InstallOption1Button:SetText(L["Setup Double Chat"])
+		InstallOption2Button:Show()
+		InstallOption2Button:SetScript('OnClick', function() SetupChat(false) end)
+		InstallOption2Button:SetText(L["Setup Single Chat"])
 	elseif PageNum == 4 then
 		f.SubTitle:SetText(L["Theme Setup"])
 		f.Desc1:SetText(L["Choose a theme layout you wish to use for your initial setup."])
-		f.Desc2:SetText(L["You can always change fonts and colors of any element of ElvUI from the in-game configuration."])
+		f.Desc2:SetText(L["You can always change fonts and colors of any element of ElvUI from the in-game configuration."]:gsub("ElvUI", E.UIName))
 		f.Desc3:SetText(L["Importance: |cffFF0000Low|r"])
 
 		InstallOption1Button:Show()
@@ -725,6 +1174,9 @@ local function SetPage(PageNum)
 		InstallOption3Button:Show()
 		InstallOption3Button:SetScript('OnClick', function() E:SetupTheme('class') end)
 		InstallOption3Button:SetText(CLASS)
+		InstallOption4Button:Show()
+		InstallOption4Button:SetScript('OnClick', function() E:SetupTheme('transparent') end)
+		InstallOption4Button:SetText(L["Transparent Theme"])
 	elseif PageNum == 5 then
 		f.SubTitle:SetText(L["Resolution"])
 		f.Desc1:SetFormattedText(L["Your current resolution is %s, this is considered a %s resolution."], E.resolution, E.lowversion == true and L["low"] or L["high"])
@@ -760,8 +1212,30 @@ local function SetPage(PageNum)
 		InstallOption4Button:SetScript('OnClick', function() E.db.layoutSet = nil; E:SetupLayout('dpsCaster') end)
 		InstallOption4Button:SetText(L["Caster DPS"])
 	elseif PageNum == 7 then
+		f.SubTitle:SetText(L["Eui UF Style"])
+		f.Desc1:SetText("")
+		for i = 1, 9 do
+			_G["InstallOptionUFStyle".. i]:Show()
+			_G["InstallOptionUFStyle".. i]:SetScript('OnClick', function() E:SetupUFStyle(i) end)
+		end
+		InstallTutorialImage:Show()
+		InstallTutorialImage:SetTexture([[Interface\AddOns\ElvUI\media\textures\ufstyle.tga]])
+	elseif PageNum == 8 then
+		f.SubTitle:SetText(L["Eui AB Style"])
+		f.Desc1:SetText("")
+		f.Desc3:SetText(L["Importance: |cffD3CF00Medium|r"])
+		InstallOption1Button:Show()
+		InstallOption1Button:SetScript('OnClick', function() E:SetupActionbar('Low') end)
+		InstallOption1Button:SetText(L["Low ScreenResolution Style"])	
+		InstallOption2Button:Show()
+		InstallOption2Button:SetScript('OnClick', function() E:SetupActionbar('Middle') end)
+		InstallOption2Button:SetText(L["Middle ScreenResolution Style"])
+		InstallOption3Button:Show()
+		InstallOption3Button:SetScript('OnClick', function() E:SetupActionbar('High') end)
+		InstallOption3Button:SetText(L["High ScreenResolution Style"])			
+	elseif PageNum == 9 then	
 		f.SubTitle:SetText(L["Auras"])
-		f.Desc1:SetText(L["Select the type of aura system you want to use with ElvUI's unitframes. Set to Aura Bar & Icons to use both aura bars and icons, set to icons only to only see icons."])
+		f.Desc1:SetText(L["Select the type of aura system you want to use with ElvUI's unitframes. Set to Aura Bar & Icons to use both aura bars and icons, set to icons only to only see icons."]:gsub("ElvUI", E.UIName))
 		f.Desc2:SetText(L["If you have an icon or aurabar that you don't want to display simply hold down shift and right click the icon for it to disapear."])
 		f.Desc3:SetText(L["Importance: |cffD3CF00Medium|r"])
 		InstallOption1Button:Show()
@@ -770,7 +1244,7 @@ local function SetPage(PageNum)
 		InstallOption2Button:Show()
 		InstallOption2Button:SetScript('OnClick', function() SetupAuras() end)
 		InstallOption2Button:SetText(L["Icons Only"])
-	elseif PageNum == 8 then
+	elseif PageNum == 10 then
 		f.SubTitle:SetText(L["Installation Complete"])
 		f.Desc1:SetText(L["You are now finished with the installation process. If you are in need of technical support please visit us at http://www.tukui.org."])
 		f.Desc2:SetText(L["Please click the button below so you can setup variables and ReloadUI."])
@@ -897,6 +1371,21 @@ function E:Install()
 		f.Status.text:Point("CENTER")
 		f.Status.text:SetText(CURRENT_PAGE.." / "..MAX_PAGE)
 
+		for i = 1, 9 do
+			local a = CreateFrame("Button", "InstallOptionUFStyle"..i, f, "UIPanelButtonTemplate")
+			a:StripTextures()
+			a:Size(30, 30)
+			a:SetText(tostring(i))
+			a:Hide()
+			if i == 1 then
+				a:Point("BOTTOMLEFT", 124, 42)
+			else
+				a:Point("LEFT", _G["InstallOptionUFStyle"..i-1], "RIGHT", 4, 0)
+			end
+			E.Skins:HandleButton(a, true)
+			f["UFStyle"..i] = a
+		end
+
 		f.Option1 = CreateFrame("Button", "InstallOption1Button", f, "UIPanelButtonTemplate")
 		f.Option1:StripTextures()
 		f.Option1:Size(160, 30)
@@ -935,9 +1424,9 @@ function E:Install()
 			f.Option1:Width(100)
 			f.Option2:Width(100)
 
-			f.Option1:ClearAllPoints()
-			f.Option1:Point('RIGHT', f.Option2, 'LEFT', -4, 0)
-			f.Option2:ClearAllPoints()
+			f.Option1:ClearAllPoints();
+			f.Option1:Point('RIGHT', f.Option2, 'LEFT', -4, 0);
+			f.Option2:ClearAllPoints();
 			f.Option2:Point('BOTTOMRIGHT', f, 'BOTTOM', -4, 45)
 		end)
 		f.Option4:SetScript('OnHide', function() f.Option1:Width(160); f.Option1:ClearAllPoints(); f.Option1:Point("BOTTOM", 0, 45); f.Option2:Width(110); f.Option2:ClearAllPoints(); f.Option2:Point('BOTTOMLEFT', f, 'BOTTOM', 4, 45) end)

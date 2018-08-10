@@ -42,8 +42,10 @@ local function UpdateCoords(self)
 
 	local coordX, coordY = E:GetXYOffset(nudgeInversePoint, 1)
 	ElvUIMoverNudgeWindow:ClearAllPoints()
-	ElvUIMoverNudgeWindow:Point(nudgePoint, mover, nudgeInversePoint, coordX, coordY)
-	E:UpdateNudgeFrame(mover, x, y)
+	if E.db.general.nudgeWindow then
+		ElvUIMoverNudgeWindow:Point(nudgePoint, mover, nudgeInversePoint, coordX, coordY)
+		E:UpdateNudgeFrame(mover, x, y)
+	end
 end
 
 local isDragging = false;
@@ -80,6 +82,53 @@ local function CreateMover(parent, name, text, overlay, snapOffset, postdrag, sh
 	f.shouldDisable = shouldDisable
 
 	f:SetFrameLevel(parent:GetFrameLevel() + 1)
+	if E.ConfigTableDB[name] then
+		local configtoggle = CreateFrame('Button', nil, f)
+		configtoggle:Point('TOPRIGHT', f, 'TOPRIGHT', -4, -4)
+
+		configtoggle:RegisterForClicks('AnyUp')
+		configtoggle:Size(18)
+		configtoggle:SetTemplate(E.db.datatexts.panelTransparency and 'Transparent' or 'Default', true)
+		configtoggle.text = configtoggle:CreateFontString(nil, 'OVERLAY')
+		configtoggle.text:FontTemplate(E.LSM:Fetch("font", E.db.datatexts.font), E.db.datatexts.fontSize, E.db.datatexts.fontOutline)
+		configtoggle.text:SetText('C')
+		configtoggle.text:SetPoint('CENTER')
+		configtoggle.text:SetJustifyH('CENTER')
+		configtoggle:SetScript('OnClick', function(self, btn) 
+			E:ToggleConfig()
+			
+			local ACD = LibStub("AceConfigDialog-3.0-ElvUI")
+			if not ACD.OpenFrames['ElvUI'] then
+				E:ToggleConfig()
+			end
+			local n = #E.ConfigTableDB[name]
+			if n == 1 then
+				ACD:SelectGroup("ElvUI", E.ConfigTableDB[name][1])
+			elseif n == 2 then
+				ACD:SelectGroup("ElvUI", E.ConfigTableDB[name][1], E.ConfigTableDB[name][2])
+			elseif n == 3 then
+				ACD:SelectGroup("ElvUI", E.ConfigTableDB[name][1], E.ConfigTableDB[name][2], E.ConfigTableDB[name][3])
+			elseif n == 4 then
+				ACD:SelectGroup("ElvUI", E.ConfigTableDB[name][1], E.ConfigTableDB[name][2], E.ConfigTableDB[name][3], E.ConfigTableDB[name][4])
+			elseif n == 5 then
+				ACD:SelectGroup("ElvUI", E.ConfigTableDB[name][1], E.ConfigTableDB[name][2], E.ConfigTableDB[name][3], E.ConfigTableDB[name][4], E.ConfigTableDB[name][5])
+			elseif n == 6 then
+				ACD:SelectGroup("ElvUI", E.ConfigTableDB[name][1], E.ConfigTableDB[name][2], E.ConfigTableDB[name][3], E.ConfigTableDB[name][4], E.ConfigTableDB[name][5], E.ConfigTableDB[name][6])
+			end				
+		end)
+		configtoggle:SetScript('OnEnter', function(self)
+			GameTooltip:SetOwner(self, 'ANCHOR_BOTTOMRIGHT', 0, -4)
+			GameTooltip:ClearLines()
+			GameTooltip:AddLine(text.. '-'.. L['Toggle Configuration'])
+			
+			GameTooltip:Show()
+		end)
+		configtoggle:SetScript('OnLeave', function(self)
+			GameTooltip:Hide()
+		end)
+		f.configtoggle = configtoggle
+	end
+
 	if overlay == true then
 		f:SetFrameStrata("DIALOG")
 	else
@@ -161,7 +210,7 @@ local function CreateMover(parent, name, text, overlay, snapOffset, postdrag, sh
 
 		E:SaveMoverPosition(name)
 
-		if ElvUIMoverNudgeWindow then
+		if ElvUIMoverNudgeWindow and E.db.general.nudgeWindow then
 			E:UpdateNudgeFrame(self, x, y)
 		end
 
@@ -178,10 +227,32 @@ local function CreateMover(parent, name, text, overlay, snapOffset, postdrag, sh
 	local function OnEnter(self)
 		if isDragging then return end
 		self.text:SetTextColor(1, 1, 1)
-		ElvUIMoverNudgeWindow:Show()
+		if E.db.general.nudgeWindow then
+			ElvUIMoverNudgeWindow:Show()
+		end
 		E.AssignFrameToNudge(self)
 		coordFrame.child = self
 		coordFrame:GetScript('OnUpdate')(coordFrame)
+		
+		local toolTip
+		if E.MoveTooltip[name] then toolTip = E.MoveTooltip[name] end
+		if toolTip then
+			GameTooltip:SetOwner(self, 'ANCHOR_TOPLEFT', 0, 4)
+			GameTooltip:ClearLines()
+
+			if type(toolTip) == 'string' then
+				GameTooltip:AddLine(toolTip, 1, 0, 0);
+			elseif type(toolTip) == 'table' then
+				for i = 1, #toolTip do
+					if i == 1 then
+						GameTooltip:AddLine(toolTip[i], 1, 0, 0)
+					else
+						GameTooltip:AddLine(toolTip[i], 34/255, 177/255, 76/255)
+					end
+				end
+			end
+			GameTooltip:Show()
+		end
 	end
 
 	local function OnMouseDown(self, button)
@@ -204,6 +275,12 @@ local function CreateMover(parent, name, text, overlay, snapOffset, postdrag, sh
 	local function OnLeave(self)
 		if isDragging then return end
 		self.text:SetTextColor(unpack(E["media"].rgbvaluecolor))
+		
+		local toolTip
+		if E.MoveTooltip[name] then toolTip = E.MoveTooltip[name] end
+		if toolTip then
+			GameTooltip:Hide()
+		end
 	end
 
 	local function OnShow(self)
@@ -247,6 +324,9 @@ end
 function E:CalculateMoverPoints(mover, nudgeX, nudgeY)
 	local screenWidth, screenHeight, screenCenter = E.UIParent:GetRight(), E.UIParent:GetTop(), E.UIParent:GetCenter()
 	local x, y = mover:GetCenter()
+	x = x or 0
+	y = y or 0
+	screenWidth, screenHeight, screenCenter = screenWidth or 0, screenHeight or 0, screenCenter or 0
 
 	local LEFT = screenWidth / 3
 	local RIGHT = screenWidth * 2 / 3
@@ -281,17 +361,17 @@ function E:CalculateMoverPoints(mover, nudgeX, nudgeY)
 
 	if mover.positionOverride then
 		if(mover.positionOverride == "TOPLEFT") then
-			x = mover:GetLeft() - E.diffGetLeft
-			y = mover:GetTop() - E.diffGetTop
+			x = mover:GetLeft() - (E.diffGetLeft or 0)
+			y = mover:GetTop() - (E.diffGetTop or 0)
 		elseif(mover.positionOverride == "TOPRIGHT") then
-			x = mover:GetRight() - E.diffGetRight
-			y = mover:GetTop() - E.diffGetTop
+			x = mover:GetRight() - (E.diffGetRight or 0)
+			y = mover:GetTop() - (E.diffGetTop or 0)
 		elseif(mover.positionOverride == "BOTTOMLEFT") then
-			x = mover:GetLeft() - E.diffGetLeft
-			y = mover:GetBottom() - E.diffGetBottom
+			x = mover:GetLeft() - (E.diffGetLeft or 0)
+			y = mover:GetBottom() - (E.diffGetBottom or 0)
 		elseif(mover.positionOverride == "BOTTOMRIGHT") then
-			x = mover:GetRight() - E.diffGetRight
-			y = mover:GetBottom() - E.diffGetBottom
+			x = mover:GetRight() - (E.diffGetRight or 0)
+			y = mover:GetBottom() - (E.diffGetBottom or 0)
 		elseif(mover.positionOverride == "BOTTOM") then
 			x = mover:GetCenter() - screenCenter;
 			y = mover:GetBottom() - E.diffGetBottom;
@@ -346,7 +426,7 @@ function E:SaveMoverDefaultPosition(name)
 	E.CreatedMovers[name]["postdrag"](_G[name], E:GetScreenQuadrant(_G[name]))
 end
 
-function E:CreateMover(parent, name, text, overlay, snapoffset, postdrag, moverTypes, shouldDisable)
+function E:CreateMover(parent, name, text, overlay, snapoffset, postdrag, moverTypes, toggleFunc, shouldDisable)
 	if not moverTypes then moverTypes = 'ALL,GENERAL' end
 
 	if E.CreatedMovers[name] == nil then
@@ -358,6 +438,7 @@ function E:CreateMover(parent, name, text, overlay, snapoffset, postdrag, moverT
 		E.CreatedMovers[name]["snapoffset"] = snapoffset
 		E.CreatedMovers[name]["point"] = GetPoint(parent)
 		E.CreatedMovers[name]["shouldDisable"] = shouldDisable
+		E.CreatedMovers[name]["enable"] = toggleFunc or function() return true; end
 
 		E.CreatedMovers[name]["type"] = {}
 		local types = {split(',', moverTypes)}
@@ -378,7 +459,11 @@ function E:ToggleMovers(show, moverType)
 			_G[name]:Hide()
 		else
 			if E.CreatedMovers[name]['type'][moverType] then
-				_G[name]:Show()
+				if E.db.general.hideDisableFrame and (not E.CreatedMovers[name].enable()) then
+					_G[name]:Hide()
+				else
+					_G[name]:Show()
+				end
 			else
 				_G[name]:Hide()
 			end

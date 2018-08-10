@@ -5,6 +5,7 @@ G['general'] = {
 	['autoScale'] = true,
 	['minUiScale'] = 0.64,
 	['eyefinity'] = false,
+	['newFuncShown'] = true,
 	['smallerWorldMap'] = true,
 	['smallerWorldMapScale'] = 0.9,
 	['fadeMapWhenMoving'] = true,
@@ -19,8 +20,15 @@ G['general'] = {
 	['showMissingTalentAlert'] = false,
 	['commandBarSetting'] = 'ENABLED_RESIZEPARENT',
 }
+G["luaError"] = {}
 
 G['classtimer'] = {}
+
+G["nameplate"] = {}
+
+G.gtData = {};
+G.gtTime = {};
+G.Ver = '';
 
 G['chat'] = {
 	['classColorMentionExcludedNames'] = {},

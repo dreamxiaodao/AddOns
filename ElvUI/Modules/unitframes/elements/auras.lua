@@ -58,8 +58,8 @@ function UF:Construct_AuraIcon(button)
 	local offset = UF.thinBorders and E.mult or E.Border
 
 	button.text = button.cd:CreateFontString(nil, 'OVERLAY')
-	button.text:Point('CENTER', 1, 1)
-	button.text:SetJustifyH('CENTER')
+	button.text:Point('TOPLEFT', 1, -1)
+	button.text:SetJustifyH('LEFT')
 
 	button:SetTemplate('Default', nil, nil, UF.thinBorders, true)
 

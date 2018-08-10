@@ -6,14 +6,17 @@ local DT = E:GetModule('DataTexts')
 local pairs = pairs
 local join = string.join
 --WoW API / Variables
-local GetBackpackCurrencyInfo = GetBackpackCurrencyInfo
-local GetMoney = GetMoney
 local IsControlKeyDown = IsControlKeyDown
 local IsLoggedIn = IsLoggedIn
+local GetMoney = GetMoney
+local GetItemInfo = GetItemInfo
 local IsShiftKeyDown = IsShiftKeyDown
+local GetBackpackCurrencyInfo = GetBackpackCurrencyInfo
+local C_WowTokenPublicUpdateMarketPrice = C_WowTokenPublic.UpdateMarketPrice
+local C_WowTokenPublicGetCurrentMarketPrice = C_WowTokenPublic.GetCurrentMarketPrice
 
 --Global variables that we don't cache, list them here for mikk's FindGlobals script
--- GLOBALS: ElvDB, ToggleAllBags
+-- GLOBALS: ElvDB
 
 local MAX_WATCHED_TOKENS = MAX_WATCHED_TOKENS
 local CURRENCY = CURRENCY
@@ -23,8 +26,14 @@ local Spent		= 0
 local resetCountersFormatter = join("", "|cffaaaaaa", L["Reset Counters: Hold Shift + Left Click"], "|r")
 local resetInfoFormatter = join("", "|cffaaaaaa", L["Reset Data: Hold Shift + Right Click"], "|r")
 
+--local buyTokenInfo = join("", "|c14df5200", L["Buy Token: Hold Alt + Left Click"], "|r")
+local token_g1, token_g2
+local TOKEN_NAME = GetItemInfo(122284)
+
 local function OnEvent(self)
 	if not IsLoggedIn() then return end
+	TOKEN_NAME = GetItemInfo(122284)
+	
 	local NewMoney = GetMoney();
 	ElvDB = ElvDB or { };
 	ElvDB['gold'] = ElvDB['gold'] or {};
@@ -40,20 +49,30 @@ local function OnEvent(self)
 		Profit = Profit + Change
 	end
 
+	if NewMoney > 100000000 then
+		local s = tostring(NewMoney)
+		s = s:sub(1, string.len(s)-2)
+		s = tonumber(s)
+		NewMoney = s * 100
+	end
+	
 	self.text:SetText(E:FormatMoney(NewMoney, E.db.datatexts.goldFormat or "BLIZZARD", not E.db.datatexts.goldCoins))
 
 	ElvDB['gold'][E.myrealm][E.myname] = NewMoney
+	
+	C_WowTokenPublicUpdateMarketPrice();--update price
+	token_g1, token_g2 = C_WowTokenPublicGetCurrentMarketPrice();
 end
 
 local function Click(self, btn)
-	if btn == "RightButton" then
-		if IsShiftKeyDown() then
-			ElvDB.gold = nil;
-			OnEvent(self)
-			DT.tooltip:Hide();
-		elseif IsControlKeyDown() then
+	if IsShiftKeyDown() then
+		if btn == "LeftButton" then
 			Profit = 0
 			Spent = 0
+			DT.tooltip:Hide();
+		elseif btn == "RightButton" then
+			ElvDB.gold = nil;
+			OnEvent(self)
 			DT.tooltip:Hide();
 		end
 	else
@@ -65,8 +84,8 @@ local function OnEnter(self)
 	DT:SetupTooltip(self)
 	local textOnly = not E.db.datatexts.goldCoins and true or false
 	local style = E.db.datatexts.goldFormat or "BLIZZARD"
-
-	DT.tooltip:AddLine(L["Session:"])
+	
+	DT.tooltip:AddLine(L['Session:'])
 	DT.tooltip:AddDoubleLine(L["Earned:"], E:FormatMoney(Profit, style, textOnly), 1, 1, 1, 1, 1, 1)
 	DT.tooltip:AddDoubleLine(L["Spent:"], E:FormatMoney(Spent, style, textOnly), 1, 1, 1, 1, 1, 1)
 	if Profit < Spent then
@@ -98,7 +117,16 @@ local function OnEnter(self)
 		end
 		if name and count then DT.tooltip:AddDoubleLine(name, count, 1, 1, 1) end
 	end
-
+	
+	if token_g1 and token_g1 > 0 and token_g2 then
+		DT.tooltip:AddLine(' ')
+		DT.tooltip:AddLine(TOKEN_NAME)
+		local g2 = _G["AUCTION_TIME_LEFT"..token_g2.."_DETAIL"];
+		DT.tooltip:AddDoubleLine(GetMoneyString(token_g1, true), g2, 1,1,1,1,1,1)
+	--	DT.tooltip:AddLine' '
+	--	DT.tooltip:AddLine(buyTokenInfo)
+	end
+	
 	DT.tooltip:AddLine' '
 	DT.tooltip:AddLine(resetCountersFormatter)
 	DT.tooltip:AddLine(resetInfoFormatter)

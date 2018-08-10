@@ -13,8 +13,11 @@ local hooksecurefunc = hooksecurefunc
 --Global variables that we don't cache, list them here for mikk's FindGlobals script
 -- GLOBALS:
 
+--QuestMapDetailsScrollFrame
+
+
 local function StyleScrollFrame(scrollFrame, widthOverride, heightOverride, inset)
-	scrollFrame:SetTemplate()
+--	scrollFrame:SetTemplate()
 	scrollFrame.spellTex = scrollFrame:CreateTexture(nil, 'ARTWORK')
 	scrollFrame.spellTex:SetTexture([[Interface\QuestFrame\QuestBG]])
 	if inset then
@@ -169,10 +172,10 @@ local function LoadSkin()
 	QuestInfoPlayerTitleFrame.backdrop:SetOutside(QuestInfoPlayerTitleFrame.Icon)
 
 	--Quest Frame
-	QuestFrame:StripTextures(true)
+	QuestFrame:StripTextures()
 	QuestFrameInset:Kill()
-	QuestFrameDetailPanel:StripTextures(true)
-	QuestDetailScrollFrame:StripTextures(true)
+	QuestFrameDetailPanel:StripTextures()
+	QuestDetailScrollFrame:StripTextures()
 	QuestDetailScrollFrame:SetTemplate()
 	StyleScrollFrame(QuestDetailScrollFrame, 506, 615, true)
 
@@ -182,15 +185,15 @@ local function LoadSkin()
 	QuestGreetingScrollFrame:SetTemplate()
 	StyleScrollFrame(QuestGreetingScrollFrame, 506, 615, true)
 
-	QuestFrameGreetingPanel:StripTextures(true)
+	QuestFrameGreetingPanel:StripTextures()
 	S:HandleButton(QuestFrameGreetingGoodbyeButton, true)
 	QuestGreetingFrameHorizontalBreak:Kill()
 
-	QuestDetailScrollChildFrame:StripTextures(true)
-	QuestRewardScrollFrame:StripTextures(true)
-	QuestRewardScrollChildFrame:StripTextures(true)
-	QuestFrameProgressPanel:StripTextures(true)
-	QuestFrameRewardPanel:StripTextures(true)
+	QuestDetailScrollChildFrame:StripTextures()
+	QuestRewardScrollFrame:StripTextures()
+	QuestRewardScrollChildFrame:StripTextures()
+	QuestFrameProgressPanel:StripTextures()
+	QuestFrameRewardPanel:StripTextures()
 	QuestFrame:CreateBackdrop("Transparent")
 	S:HandleButton(QuestFrameAcceptButton, true)
 	S:HandleButton(QuestFrameDeclineButton, true)
@@ -259,7 +262,7 @@ local function LoadSkin()
 	end)
 
 	S:HandleCloseButton(QuestLogPopupDetailFrameCloseButton)
-	S:HandleScrollBar(QuestMapDetailsScrollFrameScrollBar)
+--	S:HandleScrollBar(QuestMapDetailsScrollFrameScrollBar)
 
 	QuestLogPopupDetailFrame.ShowMapButton:StripTextures()
 	S:HandleButton(QuestLogPopupDetailFrame.ShowMapButton)

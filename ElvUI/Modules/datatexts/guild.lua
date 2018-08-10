@@ -268,7 +268,6 @@ local function OnEnter(self, _, noUpdate)
 		end
 
 		info = guildTable[i]
-
 		if E.MapInfo.zoneText and (E.MapInfo.zoneText == info[4]) then zonec = activezone else zonec = inactivezone end
 
 		classc, levelc = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[info[9]], GetQuestDifficultyColor(info[3])

@@ -6,7 +6,7 @@ local LSM = LibStub("LibSharedMedia-3.0")
 local SetCVar = SetCVar
 
 --Global variables that we don't cache, list them here for the mikk's Find Globals script
--- GLOBALS: CHAT_FONT_HEIGHTS, UNIT_NAME_FONT, DAMAGE_TEXT_FONT, STANDARD_TEXT_FONT, NORMALOFFSET, BIGOFFSET, SHADOWCOLOR
+-- GLOBALS: CHAT_FONT_HEIGHTS, UNIT_NAME_FONT, DAMAGE_TEXT_FONT, STANDARD_TEXT_FONT
 
 local function SetFont(obj, font, size, style, sr, sg, sb, sa, sox, soy, r, g, b)
 	obj:SetFont(font, size, style)
@@ -41,7 +41,9 @@ function E:UpdateBlizzardFonts()
 	end
 
 	UNIT_NAME_FONT     = NAMEFONT
-	--NAMEPLATE_FONT     = NAMEFONT
+	if E.private["nameplates"].enable then
+		NAMEPLATE_FONT     = NAMEFONT
+	end
 	DAMAGE_TEXT_FONT   = COMBAT
 	STANDARD_TEXT_FONT = NORMAL
 
@@ -128,5 +130,7 @@ function E:UpdateBlizzardFonts()
 		SetFont(DestinyFontMed,						NORMAL, 14);								 -- Added in 7.3.5 used for ?
 		SetFont(Fancy12Font,						NORMAL, 12);								 -- Added in 7.3.5 used for ?
 		SetFont(Fancy14Font,						NORMAL, 14);								 -- Added in 7.3.5 used for ?
+
+		ObjectiveFont:SetFont(NORMAL,E.db.general.questfontSize);
 	end
 end

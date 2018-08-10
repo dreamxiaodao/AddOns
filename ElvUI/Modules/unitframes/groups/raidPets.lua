@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local UF = E:GetModule('UnitFrames');
 local _, ns = ...
 local ElvUF = ns.oUF
@@ -6,6 +6,7 @@ assert(ElvUF, "ElvUI was unable to locate oUF.")
 
 --Cache global variables
 --Lua functions
+local tinsert = table.insert
 --WoW API / Variables
 local CreateFrame = CreateFrame
 local InCombatLockdown = InCombatLockdown
@@ -34,7 +35,16 @@ function UF:Construct_RaidpetFrames()
 	self.RaidDebuffs = UF:Construct_RaidDebuffs(self)
 	self.DebuffHighlight = UF:Construct_DebuffHighlight(self)
 	self.TargetGlow = UF:Construct_TargetGlow(self)
+	if E.db["clickset"].enable then  
+		self.ClickSet = E.db["clickset"]
+	end
+	
+	tinsert(self.__elements, UF.UpdateClickSet)
+ 	self:RegisterEvent('UNIT_NAME_UPDATE', UF.UpdateClickSet)
+	self:RegisterEvent('PLAYER_REGEN_ENABLED', UF.UpdateClickSet)
+	self:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED', UF.UpdateClickSet)
 	self.MouseGlow = UF:Construct_MouseGlow(self)
+
 	self.ThreatIndicator = UF:Construct_Threat(self)
 	self.RaidTargetIndicator = UF:Construct_RaidIcon(self)
 	self.HealthPrediction = UF:Construct_HealComm(self)

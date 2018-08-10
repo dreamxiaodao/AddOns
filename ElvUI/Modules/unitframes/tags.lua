@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+﻿local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local _, ns = ...
 local ElvUF = ns.oUF
 assert(ElvUF, "ElvUI was unable to locate oUF.")
@@ -78,6 +78,130 @@ local function UnitName(unit)
 		name = UNITNAME_SUMMON_TITLE17:format(_G.UnitName("player"))
 	end
 	return name, realm
+end
+
+local NECROTIC_ROT = GetSpellInfo(209858)
+local BURST = GetSpellInfo(240443)
+
+ElvUF.Tags.Events["affix:necrotic-rot"] = "UNIT_AURA PLAYER_ENTERING_WORLD"
+ElvUF.Tags.Methods["affix:necrotic-rot"] = function(unit)
+	local name, _, _, count, _, _, _, _, _, _, spellId, _ = UnitDebuff(unit, NECROTIC_ROT)
+	if spellId ~= 209858 then
+		return nil
+	else
+		return count
+	end
+end
+
+ElvUF.Tags.Events["affix:necrotic-rot-percent"] = "UNIT_AURA PLAYER_ENTERING_WORLD"
+ElvUF.Tags.Methods["affix:necrotic-rot-percent"] = function(unit)
+	local name, _, _, count, _, _, _, _, _, _, spellId, _ = UnitDebuff(unit, NECROTIC_ROT)
+	if spellId ~= 209858 then
+		return nil
+	else
+		return (count*3).. "%"
+	end
+end
+
+ElvUF.Tags.Events["affix:bursting"] = "UNIT_AURA PLAYER_ENTERING_WORLD"
+ElvUF.Tags.Methods["affix:bursting"] = function(unit)
+	local name, _, _, count, _, _, _, _, _, _, spellId, _ = UnitDebuff(unit, BURST)
+	if spellId ~= 240443 then
+		return nil
+	else
+		return count
+	end
+end
+
+ElvUF.Tags.Events["affix:bursting-percent"] = "UNIT_AURA PLAYER_ENTERING_WORLD"
+ElvUF.Tags.Methods["affix:bursting-percent"] = function(unit)
+	local name, _, _, count, _, _, _, _, _, _, spellId, _ = UnitDebuff(unit, BURST)
+	if spellId ~= 240443 then
+		return nil
+	else
+		return (count*2.5).. "%/s"
+	end
+end
+
+
+local function NormalizeSpeed(speed)
+	return speed * 100 / 7 + 0.5
+end
+local FORMAT_PERCENT_PLAYER = format("%s %%d%%%%", PLAYER) -- Percentage displaying format without target
+local FORMAT_PERCENT_PLAYERTARGET = format("%s %%d%%%%, %s %%d%%%%", PLAYER, TARGET) -- Percentage displaying format with target
+
+ElvUF.Tags.OnUpdateThrottle['PlayerTargetSpeed'] = 1
+ElvUF.Tags.Methods['PlayerTargetSpeed'] = function(unit)
+	local hasTarget = UnitExists("target") and not UnitIsUnit("player", "target") and not UnitIsUnit("vehicle", "target")
+	local playerSpeed = GetUnitSpeed(unit)
+	local targetSpeed = hasTarget and GetUnitSpeed("target") or ''
+	if targetSpeed then
+		return (format(FORMAT_PERCENT_PLAYERTARGET, NormalizeSpeed(playerSpeed), NormalizeSpeed(targetSpeed)));
+	else
+		return (format(FORMAT_PERCENT_PLAYER, NormalizeSpeed(playerSpeed)));
+	end
+end
+
+
+ElvUF.Tags.Events['faction'] = 'UNIT_NAME_UPDATE'
+ElvUF.Tags.Methods['faction'] = function(unit)
+	local _, localizedFaction = UnitFactionGroup(unit)
+	local _, playerFaction = UnitFactionGroup('player')
+	if localizedFaction then
+		return localizedFaction
+	else
+		return nil
+	end
+end
+
+ElvUF.Tags.Events['cpoints'] = 'UNIT_POWER_UPDATE UNIT_AURA'
+ElvUF.Tags.Methods['cpoints'] = function(unit)
+	local cp
+	if(UnitHasVehicleUI'player') then
+		cp = UnitPower('vehicle', 4)
+	else
+		cp = UnitPower('player', 4)
+	end
+	if cp and cp > 0 then
+		local color = Hex(unpack(E:GetColorTable(E.db.unitframe.colors.classResources.ROGUE[cp])))
+		
+		return color..cp..'|r';
+	else
+		return nil;
+	end
+end
+
+ElvUF.Tags.Events['anticipation'] = 'UNIT_AURA PLAYER_ENTERING_WORLD'
+ElvUF.Tags.Methods['anticipation'] = function(unit)
+	if select(2, UnitClass('player')) ~= "ROGUE" then return nil; end
+		
+	local ANTICIPATION = GetSpellInfo(115189)
+	local name, _, _, count = UnitBuff(unit, ANTICIPATION)
+	
+	if count and count > 0 then
+		local color = Hex(unpack(E:GetColorTable(E.db.unitframe.colors.classResources.ROGUE[count])))
+		
+		return color..count..'|r';
+	else
+		return nil;
+	end
+end
+
+
+ElvUF.Tags.Events['raidgroup'] = 'GROUP_ROSTER_UPDATE'
+ElvUF.Tags.Methods['raidgroup'] = function(unit)
+	local R = {'①','②','③','④','⑤','⑥','⑦','⑧'}
+	if IsInRaid() then
+		for i = 1, GetNumGroupMembers() do
+			local name, _, subgroup = GetRaidRosterInfo(i)
+			local Name, Realm = UnitFullName(unit)
+			if (name == Name) or (Realm and (name == Name..'-'..Realm)) then
+				return R[subgroup] or nil
+			end
+		end
+	else
+		return nil
+	end
 end
 
 ElvUF.Tags.Events['altpower:percent'] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
@@ -186,9 +310,14 @@ ElvUF.Tags.Methods['healthcolor'] = function(unit)
 	end
 end
 
+ElvUF.Tags.Events['health:max'] = 'UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION PLAYER_FLAGS_CHANGED'
+ElvUF.Tags.Methods['health:max'] = function(unit)
+	return UnitHealthMax(unit) or ' '
+end
+
 ElvUF.Tags.Events['health:current'] = 'UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION PLAYER_FLAGS_CHANGED'
 ElvUF.Tags.Methods['health:current'] = function(unit)
-	local status = UnitIsDead(unit) and L["Dead"] or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
 	if (status) then
 		return status
 	else
@@ -198,7 +327,7 @@ end
 
 ElvUF.Tags.Events['health:deficit'] = 'UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION PLAYER_FLAGS_CHANGED'
 ElvUF.Tags.Methods['health:deficit'] = function(unit)
-	local status = UnitIsDead(unit) and L["Dead"] or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
 
 	if (status) then
 		return status
@@ -209,7 +338,7 @@ end
 
 ElvUF.Tags.Events['health:current-percent'] = 'UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION PLAYER_FLAGS_CHANGED'
 ElvUF.Tags.Methods['health:current-percent'] = function(unit)
-	local status = UnitIsDead(unit) and L["Dead"] or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
 
 	if (status) then
 		return status
@@ -220,7 +349,7 @@ end
 
 ElvUF.Tags.Events['health:current-max'] = 'UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION PLAYER_FLAGS_CHANGED'
 ElvUF.Tags.Methods['health:current-max'] = function(unit)
-	local status = UnitIsDead(unit) and L["Dead"] or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
 
 	if (status) then
 		return status
@@ -231,12 +360,23 @@ end
 
 ElvUF.Tags.Events['health:current-max-percent'] = 'UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION PLAYER_FLAGS_CHANGED'
 ElvUF.Tags.Methods['health:current-max-percent'] = function(unit)
-	local status = UnitIsDead(unit) and L["Dead"] or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
 
 	if (status) then
 		return status
 	else
 		return E:GetFormattedText('CURRENT_MAX_PERCENT', UnitHealth(unit), UnitHealthMax(unit))
+	end
+end
+
+ElvUF.Tags.Events['status'] = 'UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION PLAYER_FLAGS_CHANGED'
+ElvUF.Tags.Methods['status'] = function(unit)
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L['Ghost'] or not UnitIsConnected(unit) and L['Offline']
+
+	if (status) then
+		return status
+	else
+		return nil
 	end
 end
 
@@ -249,7 +389,7 @@ end
 
 ElvUF.Tags.Events['health:percent'] = 'UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION PLAYER_FLAGS_CHANGED'
 ElvUF.Tags.Methods['health:percent'] = function(unit)
-	local status = UnitIsDead(unit) and L["Dead"] or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
 
 	if (status) then
 		return status
@@ -260,7 +400,7 @@ end
 
 ElvUF.Tags.Events['health:percent-with-absorbs'] = 'UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_ABSORB_AMOUNT_CHANGED UNIT_CONNECTION PLAYER_FLAGS_CHANGED'
 ElvUF.Tags.Methods['health:percent-with-absorbs'] = function(unit)
-	local status = UnitIsDead(unit) and L["Dead"] or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
 
 	if (status) then
 		return status
@@ -578,19 +718,19 @@ end
 ElvUF.Tags.Events['name:veryshort'] = 'UNIT_NAME_UPDATE'
 ElvUF.Tags.Methods['name:veryshort'] = function(unit)
 	local name = UnitName(unit)
-	return name ~= nil and E:ShortenString(name, 5) or nil
+	return name ~= nil and E:ShortenString(name, 4) or nil
 end
 
 ElvUF.Tags.Events['name:short'] = 'UNIT_NAME_UPDATE'
 ElvUF.Tags.Methods['name:short'] = function(unit)
 	local name = UnitName(unit)
-	return name ~= nil and E:ShortenString(name, 10) or nil
+	return name ~= nil and E:ShortenString(name, 6) or nil
 end
 
 ElvUF.Tags.Events['name:medium'] = 'UNIT_NAME_UPDATE'
 ElvUF.Tags.Methods['name:medium'] = function(unit)
 	local name = UnitName(unit)
-	return name ~= nil and E:ShortenString(name, 15) or nil
+	return name ~= nil and E:ShortenString(name, 10) or nil
 end
 
 ElvUF.Tags.Events['name:long'] = 'UNIT_NAME_UPDATE'
@@ -601,7 +741,7 @@ end
 
 ElvUF.Tags.Events['name:veryshort:status'] = 'UNIT_NAME_UPDATE UNIT_CONNECTION PLAYER_FLAGS_CHANGED UNIT_HEALTH'
 ElvUF.Tags.Methods['name:veryshort:status'] = function(unit)
-	local status = UnitIsDead(unit) and L["Dead"] or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
 	local name = UnitName(unit)
 	if (status) then
 		return status
@@ -612,7 +752,7 @@ end
 
 ElvUF.Tags.Events['name:short:status'] = 'UNIT_NAME_UPDATE UNIT_CONNECTION PLAYER_FLAGS_CHANGED UNIT_HEALTH'
 ElvUF.Tags.Methods['name:short:status'] = function(unit)
-	local status = UnitIsDead(unit) and L["Dead"] or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
 	local name = UnitName(unit)
 	if (status) then
 		return status
@@ -623,7 +763,7 @@ end
 
 ElvUF.Tags.Events['name:medium:status'] = 'UNIT_NAME_UPDATE UNIT_CONNECTION PLAYER_FLAGS_CHANGED UNIT_HEALTH'
 ElvUF.Tags.Methods['name:medium:status'] = function(unit)
-	local status = UnitIsDead(unit) and L["Dead"] or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
 	local name = UnitName(unit)
 	if (status) then
 		return status
@@ -634,7 +774,7 @@ end
 
 ElvUF.Tags.Events['name:long:status'] = 'UNIT_NAME_UPDATE UNIT_CONNECTION PLAYER_FLAGS_CHANGED UNIT_HEALTH'
 ElvUF.Tags.Methods['name:long:status'] = function(unit)
-	local status = UnitIsDead(unit) and L["Dead"] or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
+	local status = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L["Ghost"] or not UnitIsConnected(unit) and L["Offline"]
 	local name = UnitName(unit)
 	if (status) then
 		return status
@@ -1002,6 +1142,9 @@ local baseSpeed = BASE_MOVEMENT_SPEED
 local speedText = SPEED
 ElvUF.Tags.OnUpdateThrottle['speed:percent'] = 0.1
 ElvUF.Tags.Methods['speed:percent'] = function(unit)
+	if unit == 'player' and UnitHasVehicleUI(unit) then
+		unit = "vehicle"
+	end
 	local currentSpeedInYards = GetUnitSpeed(unit)
 	local currentSpeedInPercent = (currentSpeedInYards / baseSpeed) * 100
 
@@ -1010,6 +1153,9 @@ end
 
 ElvUF.Tags.OnUpdateThrottle['speed:percent-moving'] = 0.1
 ElvUF.Tags.Methods['speed:percent-moving'] = function(unit)
+	if unit == 'player' and UnitHasVehicleUI(unit) then
+		unit = "vehicle"
+	end
 	local currentSpeedInYards = GetUnitSpeed(unit)
 	local currentSpeedInPercent = currentSpeedInYards > 0 and ((currentSpeedInYards / baseSpeed) * 100)
 
@@ -1022,6 +1168,9 @@ end
 
 ElvUF.Tags.OnUpdateThrottle['speed:percent-raw'] = 0.1
 ElvUF.Tags.Methods['speed:percent-raw'] = function(unit)
+	if unit == 'player' and UnitHasVehicleUI(unit) then
+		unit = "vehicle"
+	end
 	local currentSpeedInYards = GetUnitSpeed(unit)
 	local currentSpeedInPercent = (currentSpeedInYards / baseSpeed) * 100
 
@@ -1030,6 +1179,9 @@ end
 
 ElvUF.Tags.OnUpdateThrottle['speed:percent-moving-raw'] = 0.1
 ElvUF.Tags.Methods['speed:percent-moving-raw'] = function(unit)
+	if unit == 'player' and UnitHasVehicleUI(unit) then
+		unit = "vehicle"
+	end
 	local currentSpeedInYards = GetUnitSpeed(unit)
 	local currentSpeedInPercent = currentSpeedInYards > 0 and ((currentSpeedInYards / baseSpeed) * 100)
 
@@ -1042,6 +1194,9 @@ end
 
 ElvUF.Tags.OnUpdateThrottle['speed:yardspersec'] = 0.1
 ElvUF.Tags.Methods['speed:yardspersec'] = function(unit)
+	if unit == 'player' and UnitHasVehicleUI(unit) then
+		unit = "vehicle"
+	end
 	local currentSpeedInYards = GetUnitSpeed(unit)
 
 	return format("%s: %.1f", speedText, currentSpeedInYards)
@@ -1049,6 +1204,9 @@ end
 
 ElvUF.Tags.OnUpdateThrottle['speed:yardspersec-moving'] = 0.1
 ElvUF.Tags.Methods['speed:yardspersec-moving'] = function(unit)
+	if unit == 'player' and UnitHasVehicleUI(unit) then
+		unit = "vehicle"
+	end
 	local currentSpeedInYards = GetUnitSpeed(unit)
 
 	return currentSpeedInYards > 0 and format("%s: %.1f", speedText, currentSpeedInYards) or nil
@@ -1056,12 +1214,18 @@ end
 
 ElvUF.Tags.OnUpdateThrottle['speed:yardspersec-raw'] = 0.1
 ElvUF.Tags.Methods['speed:yardspersec-raw'] = function(unit)
+	if unit == 'player' and UnitHasVehicleUI(unit) then
+		unit = "vehicle"
+	end
 	local currentSpeedInYards = GetUnitSpeed(unit)
 	return format("%.1f", currentSpeedInYards)
 end
 
 ElvUF.Tags.OnUpdateThrottle['speed:yardspersec-moving-raw'] = 0.1
 ElvUF.Tags.Methods['speed:yardspersec-moving-raw'] = function(unit)
+	if unit == 'player' and UnitHasVehicleUI(unit) then
+		unit = "vehicle"
+	end
 	local currentSpeedInYards = GetUnitSpeed(unit)
 
 	return currentSpeedInYards > 0 and format("%.1f", currentSpeedInYards) or nil

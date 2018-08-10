@@ -112,7 +112,7 @@ end
 
 E.Options.args.auras = {
 	type = 'group',
-	name = BUFFOPTIONS_LABEL,
+	name = '02.'.. BUFFOPTIONS_LABEL,
 	childGroups = "tab",
 	get = function(info) return E.db.auras[ info[#info] ] end,
 	set = function(info, value) E.db.auras[ info[#info] ] = value; A:UpdateHeader(ElvUIPlayerBuffs); A:UpdateHeader(ElvUIPlayerDebuffs) end,
@@ -221,6 +221,13 @@ E.Options.args.auras = {
 							type = "toggle",
 							name = L["Debuffs"],
 							desc = L["Allow Masque to handle the skinning of this element."],
+						},
+						openConfig = {
+							order = 10,
+							type = "execute",
+							name = L['Open Config'],
+							disabled = function() return not E:IsConfigurableAddOn("Masque"); end,
+							func = function() LibStub("AceAddon-3.0"):GetAddon("Masque"):ShowOptions();E:ToggleConfig(); end,
 						},
 					},
 				},

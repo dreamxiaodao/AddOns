@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local UF = E:GetModule('UnitFrames');
 local _, ns = ...
 local ElvUF = ns.oUF
@@ -6,6 +6,7 @@ assert(ElvUF, "ElvUI was unable to locate oUF.")
 
 --Cache global variables
 --Lua functions
+local tinsert = table.insert
 --WoW API / Variables
 local CreateFrame = CreateFrame
 local GetInstanceInfo = GetInstanceInfo
@@ -25,6 +26,9 @@ function UF:Construct_RaidFrames()
 	self.RaisedElementParent.TextureParent = CreateFrame('Frame', nil, self.RaisedElementParent)
 	self.RaisedElementParent:SetFrameLevel(self:GetFrameLevel() + 100)
 
+	if E.db["clickset"].enable then  
+		self.ClickSet = E.db["clickset"]
+	end
 	self.Health = UF:Construct_HealthBar(self, true, true, 'RIGHT')
 
 	self.Power = UF:Construct_PowerBar(self, true, true, 'LEFT')
@@ -33,7 +37,7 @@ function UF:Construct_RaidFrames()
 	self.Portrait3D = UF:Construct_Portrait(self, 'model')
 	self.Portrait2D = UF:Construct_Portrait(self, 'texture')
 
-	self.Name = UF:Construct_NameText(self)
+	self.Name = UF:Construct_NameText(self, "raid")
 	self.Buffs = UF:Construct_Buffs(self)
 	self.Debuffs = UF:Construct_Debuffs(self)
 	self.AuraWatch = UF:Construct_AuraWatch(self)
@@ -43,7 +47,24 @@ function UF:Construct_RaidFrames()
 	self.GroupRoleIndicator = UF:Construct_RoleIcon(self)
 	self.RaidRoleFramesAnchor = UF:Construct_RaidRoleFrames(self)
 	self.MouseGlow = UF:Construct_MouseGlow(self)
+	self.PhaseIndicator = UF:Construct_PhaseIcon(self)
 	self.TargetGlow = UF:Construct_TargetGlow(self)
+
+
+	tinsert(self.__elements, UF.UpdateClickSet)
+ 	self:RegisterEvent('UNIT_NAME_UPDATE', UF.UpdateClickSet)
+	self:RegisterEvent('PLAYER_REGEN_ENABLED', UF.UpdateClickSet)
+	self:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED', UF.UpdateClickSet)
+	self:HookScript("OnEnter", function(self)
+		if self.db and self.db.mouseGlow then
+			self.MouseGlow:Show()
+		end
+	end)
+	self:HookScript("OnLeave", function(self)
+		if self.db and self.db.mouseGlow then		
+			self.MouseGlow:Hide()
+		end
+	end)
 
 	self.ThreatIndicator = UF:Construct_Threat(self)
 	self.RaidTargetIndicator = UF:Construct_RaidIcon(self)
@@ -81,7 +102,7 @@ function UF:RaidSmartVisibility(event)
 
 			UnregisterStateDriver(self, "visibility")
 
-			if(maxPlayers < 40) then
+			if(maxPlayers < 41) then
 				self:Show()
 				self.isInstanceForced = true
 				self.blockVisibilityChanges = false
@@ -180,7 +201,7 @@ function UF:Update_RaidFrames(frame, db)
 	UF:Configure_HealthBar(frame)
 
 	--Name
-	UF:UpdateNameSettings(frame)
+	UF:UpdateNameSettings(frame, "raid")
 
 	--Power
 	UF:Configure_Power(frame)
@@ -202,14 +223,14 @@ function UF:Update_RaidFrames(frame, db)
 	--Raid Icon
 	UF:Configure_RaidIcon(frame)
 
-	-- Resurrect Icon
-	UF:Configure_ResurrectionIcon(frame)
-
 	--Debuff Highlight
 	UF:Configure_DebuffHighlight(frame)
 
 	--Role Icon
 	UF:Configure_RoleIcon(frame)
+
+	-- Resurrect Icon
+	UF:Configure_ResurrectionIcon(frame)
 
 	--OverHealing
 	UF:Configure_HealComm(frame)
@@ -228,6 +249,9 @@ function UF:Update_RaidFrames(frame, db)
 
 	--CustomTexts
 	UF:Configure_CustomTexts(frame)
+	
+	-- PhaseIndicator
+	UF:Configure_PhaseIcon(frame)
 
 	frame:UpdateAllElements("ElvUI_UpdateAllElements")
 end

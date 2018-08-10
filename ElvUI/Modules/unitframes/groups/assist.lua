@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local UF = E:GetModule('UnitFrames');
 local _, ns = ...
 local ElvUF = ns.oUF
@@ -23,6 +23,9 @@ function UF:Construct_AssistFrames()
 	self.RaisedElementParent.TextureParent = CreateFrame('Frame', nil, self.RaisedElementParent)
 	self.RaisedElementParent:SetFrameLevel(self:GetFrameLevel() + 100)
 
+	if E.db["clickset"].enable then  
+		self.ClickSet = E.db["clickset"]
+	end
 	self.Health = UF:Construct_HealthBar(self, true)
 	self.Name = UF:Construct_NameText(self)
 	self.ThreatIndicator = UF:Construct_Threat(self)
@@ -37,7 +40,6 @@ function UF:Construct_AssistFrames()
 		self.AuraWatch = UF:Construct_AuraWatch(self)
 		self.RaidDebuffs = UF:Construct_RaidDebuffs(self)
 		self.DebuffHighlight = UF:Construct_DebuffHighlight(self)
-
 		self.unitframeType = "assist"
 	else
 		self.unitframeType = "assisttarget"
@@ -47,6 +49,10 @@ function UF:Construct_AssistFrames()
 	UF:Update_StatusBars()
 	UF:Update_FontStrings()
 
+	tinsert(self.__elements, UF.UpdateClickSet)
+	self:RegisterEvent('UNIT_NAME_UPDATE', UF.UpdateClickSet)
+	self:RegisterEvent('PLAYER_REGEN_ENABLED', UF.UpdateClickSet)
+	self:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED', UF.UpdateClickSet)
 	self.originalParent = self:GetParent()
 
 	return self
@@ -68,7 +74,7 @@ function UF:Update_AssistHeader(header, db)
 
 	UF:ClearChildPoints(header:GetChildren())
 	header:SetAttribute("yOffset", db.verticalSpacing)
-
+	
 	local width, height = header:GetSize()
 	header.dirtyWidth, header.dirtyHeight = width, max(height, 2*db.height + db.verticalSpacing)
 

@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local UF = E:GetModule('UnitFrames');
 
 --Cache global variables
@@ -18,9 +18,24 @@ function UF:Construct_PowerBar(frame, bg, text, textPos)
 	power.PostUpdate = self.PostUpdatePower
 
 	if bg then
-		power.bg = power:CreateTexture(nil, 'BORDER')
-		power.bg:SetAllPoints()
-		power.bg:SetTexture(E["media"].blankTex)
+		if E.db.unitframe.transparent and E.db.unitframe.powertrans and E.db.general.transparentStyle == 2 then
+			local pbg = CreateFrame("Frame", nil, power)
+			pbg:SetFrameLevel(power:GetFrameLevel()-2)
+			pbg:SetAllPoints(power)
+			pbg:SetAlpha(0)
+			local b = pbg:CreateTexture(nil, "BACKGROUND")
+			b:SetTexture(E["media"].normTex)
+			b:SetAllPoints(power)
+			power.bg = b
+			power.pbg = pbg
+		else
+			power.bg = power:CreateTexture(nil, 'BORDER')
+			power.bg:SetAllPoints()
+			power.bg:SetTexture(E["media"].blankTex)
+			if E.db.unitframe.transparent then
+				power.bg:SetAlpha(E.db.general.backdropfadecolor.a or 0.4)
+			end
+		end
 		power.bg.multiplier = 0.2
 	end
 
@@ -200,13 +215,13 @@ function UF:Configure_Power(frame)
 end
 
 local tokens = { [0] = "MANA", "RAGE", "FOCUS", "ENERGY", "RUNIC_POWER" }
-function UF:PostUpdatePower(unit, _, _, max)
+function UF:PostUpdatePower(unit, cur, min, max)
 	local parent = self.origParent or self:GetParent()
 
 	if parent.isForced then
 		local pType = random(0, 4)
 		local color = ElvUF['colors'].power[tokens[pType]]
-		local min = random(1, max)
+		min = random(1, max)
 		self:SetValue(min)
 
 		if not self.colorClass then
@@ -215,8 +230,34 @@ function UF:PostUpdatePower(unit, _, _, max)
 			self.bg:SetVertexColor(color[1] * mu, color[2] * mu, color[3] * mu)
 		end
 	end
-
+	
 	local db = parent.db
+
+	if (unit == 'player' and db and db.power.colorPerc and cur and cur > 0) then
+		local per = cur / max
+		if (per >= 0.9) then
+			self:SetStatusBarColor(db.power.color9.r, db.power.color9.g, db.power.color9.b)
+		elseif (per < 0.9 and per >= 0.8) then
+			self:SetStatusBarColor(db.power.color8.r, db.power.color8.g, db.power.color8.b)
+		elseif (per < 0.8 and per >= 0.7) then
+			self:SetStatusBarColor(db.power.color7.r, db.power.color7.g, db.power.color7.b)
+		elseif (per < 0.7 and per >= 0.6) then
+			self:SetStatusBarColor(db.power.color6.r, db.power.color6.g, db.power.color6.b)
+		elseif (per < 0.6 and per >= 0.5) then
+			self:SetStatusBarColor(db.power.color5.r, db.power.color5.g, db.power.color5.b)
+		elseif (per < 0.5 and per >= 0.4) then
+			self:SetStatusBarColor(db.power.color4.r, db.power.color4.g, db.power.color4.b)
+		elseif (per < 0.4 and per >= 0.3) then
+			self:SetStatusBarColor(db.power.color3.r, db.power.color3.g, db.power.color3.b)
+		elseif (per < 0.3 and per >= 0.2) then
+			self:SetStatusBarColor(db.power.color2.r, db.power.color2.g, db.power.color2.b)
+		elseif (per < 0.2 and per >= 0.1) then
+			self:SetStatusBarColor(db.power.color1.r, db.power.color1.g, db.power.color1.b)
+		elseif (per < 0.1 and per > 0) then
+			self:SetStatusBarColor(db.power.color0.r, db.power.color0.g, db.power.color0.b)
+		end
+	end
+
 	if db and db.power and db.power.hideonnpc then
 		UF:PostNamePosition(parent, unit)
 	end

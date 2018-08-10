@@ -1,4 +1,4 @@
-local E, L, V, P, G = unpack(select(2, ...)); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(select(2, ...)); --Inport: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local UF = E:GetModule('UnitFrames');
 local _, ns = ...
 local ElvUF = ns.oUF
@@ -24,6 +24,8 @@ function UF:Construct_FocusFrame(frame)
 	frame.Portrait2D = self:Construct_Portrait(frame, 'texture')
 
 	frame.Buffs = self:Construct_Buffs(frame)
+	frame:RegisterEvent('PLAYER_FOCUS_CHANGED', UF.UpdateRangeText)
+	frame.RangeText = self:Construct_RangeText(frame)
 
 	frame.Castbar = self:Construct_Castbar(frame, L["Focus Castbar"])
 	frame.Castbar.SafeZone = nil
@@ -34,10 +36,9 @@ function UF:Construct_FocusFrame(frame)
 	frame.AuraBars = self:Construct_AuraBarHeader(frame)
 	frame.Range = self:Construct_Range(frame)
 	frame.ThreatIndicator = self:Construct_Threat(frame)
+	frame.InfoPanel = self:Construct_InfoPanel(frame)
 	frame.MouseGlow = self:Construct_MouseGlow(frame)
 	frame.TargetGlow = self:Construct_TargetGlow(frame)
-	frame.InfoPanel = self:Construct_InfoPanel(frame)
-
 	frame.customTexts = {}
 	frame:Point('BOTTOMRIGHT', ElvUF_Target, 'TOPRIGHT', 0, 220)
 	E:CreateMover(frame, frame:GetName()..'Mover', L["Focus Frame"], nil, nil, nil, 'ALL,SOLO')
@@ -114,6 +115,9 @@ function UF:Update_FocusFrame(frame, db)
 
 	--Range
 	UF:Configure_Range(frame)
+
+	--RangeText
+	UF:Configure_RangeText(frame)
 
 	--CustomTexts
 	UF:Configure_CustomTexts(frame)
